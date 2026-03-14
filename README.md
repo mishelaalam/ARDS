@@ -21,7 +21,7 @@ Make sure you have the following installed:
 - [MySQL Workbench](https://dev.mysql.com/downloads/workbench/)
 - [Git](https://git-scm.com/)
 
-### 1. Clone the Repository
+### 1. Clone the Repository in VS code terminal
 ```bash
 git clone https://github.com/mishelaalam/ARDS.git
 cd ARDS
@@ -33,7 +33,7 @@ cd ARDS
 - Open a new query tab, paste the contents of `database/schema.sql` and run it
 - All tables will be created automatically
 
-### 3. Set Up the Backend
+### 3. Set Up the Backend in VS Code
 ```bash
 cd server
 npm install
