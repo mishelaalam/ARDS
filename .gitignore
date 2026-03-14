@@ -2,3 +2,5 @@ node_modules/
 .env
 client/node_modules/
 dist/
+server/.env
+client/.env
