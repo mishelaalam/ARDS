@@ -1,6 +1,7 @@
 -- ARDS: Airline Reservation Database System
 -- Group 5 - CPSC 471 W26
 
+
 CREATE DATABASE IF NOT EXISTS ards;
 USE ards;
 
