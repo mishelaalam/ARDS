@@ -1,5 +1,12 @@
-CREATE DATABASE IF NOT EXISTS ards;
-USE ards;
+-- ARDS: Airline Reservation Database System
+-- Group 5 - CPSC 471 W26
+
+
+DROP DATABASE IF EXISTS AIRPORT_RESERVATION_DATABASE;
+CREATE DATABASE AIRPORT_RESERVATION_DATABASE;
+USE AIRPORT_RESERVATION_DATABASE;
+
+-- create tables
 
 CREATE TABLE USER (
     User_ID int NOT NULL,
@@ -188,7 +195,8 @@ CREATE TABLE carries (
     FOREIGN KEY (Flight_ID) REFERENCES FLIGHT(Flight_ID)
 );
 
--- Sample Data
+
+-- Insert sample data
 
 INSERT INTO USER VALUES
 (1, 'hannahx', 'hannah@gmail.com', '4035551111', 'hash123', '2025-01-10'),
@@ -276,3 +284,8 @@ INSERT INTO carries VALUES
 ('P001', 1, 101),
 ('P001', 1, 102),
 ('P002', 2, 103);
+
+-- test queries
+SELECT * FROM FLIGHT;
+SELECT * FROM USER;
+SELECT COUNT(*) FROM USER;
