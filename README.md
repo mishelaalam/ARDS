@@ -43,7 +43,7 @@ Create a `.env` file inside the `server` folder:
 DB_HOST=127.0.0.1
 DB_USER=root
 DB_PASSWORD=yourpassword
-DB_NAME=ards
+DB_NAME=AIRPORT_RESERVATION_DATABASE
 ```
 Then start the server:
 ```bash
