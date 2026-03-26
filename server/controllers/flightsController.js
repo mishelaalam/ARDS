@@ -37,7 +37,7 @@ const calculateFlightScore = (flight, userPreferences, bookingHistory) => {
     if(userPreferences && userPreferences.Budget_max) {
       //price score is calculated out of 100
       //we do max with 0 so that it can never go to the negatives, if the score is negative, set it to 0
-      const priceScore = Math.max(0, 100 - (flight.Base_price / userPreferences.Budget_max * 100));
+      const priceScore = Math.max(0, 100 - (flight.price / userPreferences.Budget_max * 100));
 
       score += priceScore * 0.3;
 
@@ -293,18 +293,31 @@ const getRecommendations = (req, res) => {
         score: calculateFlightScore(flight, userPreferences, bookingHistory) //call helper function calculateFlightScore
       }));
 
+      // DEBUG: Log the scores to see if they're being calculated
+      // console.log('=== DEBUG SCORES ===');
+      // console.log('User Preferences:', userPreferences);
+      // console.log('Booking History:', bookingHistory);
+      // scoredFlights.forEach(flight => {
+      //   console.log(`Flight ${flight.Flight_ID} (${flight.airline}): score = ${flight.score}, price = ${flight.price}`);
+      // });
+      // console.log('===================');
+
       //select the top recommendations
       //recommendations will hold the top 3-5 flights based on their score
-      let recommendations = [];
+      //let recommendations = [];
+
+      //create a map for recommendations so we can add multiple labels for a flight if they satisfy them
+      const recommendations = new Map();
 
       //for this design, let us always include the cheapest one, the fastest, and best overall
       //1. cheapest --> sort based on price
       const cheapest = [...scoredFlights].sort((a, b) => a.price - b.price)[0]; //take the top one (first one) in sorted list
       if (cheapest) {
-        recommendations.push({
+        recommendations.set(cheapest.Flight_ID,{
           ...cheapest,
-          label: "Cheapest",
-          badge_color: "yellow",
+          score: cheapest.score,
+          labels: ["Cheapest"],
+          badge_colors: ["yellow"],
           departure_time_formatted: formatTime(cheapest.Departure_time),
           arrival_time_formatted: formatTime(cheapest.Arrival_time),
           price_formatted: `$${cheapest.price}`
@@ -323,13 +336,19 @@ const getRecommendations = (req, res) => {
       })[0]; //get top one again
 
       //if there exists flight that are in fastest
-      //and there is not a flight in recommendations that has already been listed equal to the fastest one
-      if (fastest && !recommendations.some(r => r.Flight_ID === fastest.Flight_ID)) {
+      //if there already is that flight in recommendations, add the fastes label to it too
+      if (recommendations.has(fastest.Flight_ID)) {
+        //add label to existing flight
+        const existing = recommendations.get(fastest.Flight_ID);
+        existing.labels.push("Fastest");
+        existing.badge_colors.push("red");
+      } else {
         //push to recommendations
-        recommendations.push({
+        recommendations.set(fastest.Flight_ID, {
           ...fastest,
-          label: "Fastest",
-          badge_color: "red",
+          score : fastest.score,
+          labels: ["Fastest"],
+          badge_colors: ["red"],
           departure_time_formatted: formatTime(fastest.Departure_time),
           arrival_time_formatted: formatTime(fastest.Arrival_time),
           price_formatted: `$${fastest.price}`
@@ -338,48 +357,72 @@ const getRecommendations = (req, res) => {
       
       //3. best overall
       const bestOverall = [...scoredFlights].sort((a, b) => b.score - a.score)[0];
-      if(bestOverall && !recommendations.some(r => r.Flight_ID === bestOverall.Flight_ID)) {
-        recommendations.push({
-          ...bestOverall,
-          label: "Best Overall",
-          badge_color: "green",
-          departure_time_formatted: formatTime(bestOverall.Departure_time),
-          arrival_time_formatted: formatTime(bestOverall.Arrival_time),
-          price_formatted: `$${bestOverall.price}`
-        });
-      }
-
-      //4. add one more if there is less than 4 recommendations
-      //if recommendations has less than 4 and flights to show for this route has more than what is shown:
-      if(recommendations.length < 4 && flights.length > recommendations.length) {
-        //get the remaining flights that are not listed in recommendations
-        const remaining = scoredFlights.filter(f => !recommendations.some(r => r.Flight_ID === f.Flight_ID));
-        
-        //if there are remaining flights
-        //just add one on there for a decent option for the user
-        if (remaining.length > 0) {
-          const added = remaining[0];
-          recommendations.push({
-            ...added,
-            label: "Good Choice",
-            badge_color: "gray",
-            departure_time_formatted: formatTime(additional.Departure_time),
-            arrival_time_formatted: formatTime(additional.Arrival_time),
-            price_formatted: `$${additional.price}`
+      if (bestOverall) {
+        if (recommendations.has(bestOverall.Flight_ID)) {
+          // Add label to existing flight
+          const existing = recommendations.get(bestOverall.Flight_ID);
+          existing.labels.push("Best Overall");
+          existing.badge_colors.push("green");
+        } else {
+            recommendations.set(bestOverall.Flight_ID, {
+            ...bestOverall,
+            score: bestOverall.score,
+            labels: ["Best Overall"],
+            badge_colors: ["green"],
+            departure_time_formatted: formatTime(bestOverall.Departure_time),
+            arrival_time_formatted: formatTime(bestOverall.Arrival_time),
+            price_formatted: `$${bestOverall.price}`
           });
         }
       }
 
+      //4. add one more if there is less than 4 recommendations
+      //if recommendations has less than 4 and flights to show for this route has more than what is shown:
+      if(recommendations.size < 4 && flights.length > recommendations.size) {
+        //get the remaining flights that are not listed in recommendations
+        const remaining = scoredFlights.filter(f => !recommendations.has(f.Flight_ID));
+    
+        //sort remaining by score (best first)
+        remaining.sort((a, b) => b.score - a.score);
+
+        //add up to 2 more flights to reach 4 total
+        const toAdd = Math.min(2, 4 - recommendations.size, remaining.length);
+        
+        //if there are remaining flights
+        //just add up to 2 on there for a decent option for the user
+        for (let i = 0; i < toAdd; i++) {
+          const goodChoice = remaining[i];
+          recommendations.set(goodChoice.Flight_ID, {
+            ...goodChoice,
+            labels: ["Good Choice"],
+            badge_colors: ["gray"],
+            departure_time_formatted: formatTime(goodChoice.Departure_time),
+            arrival_time_formatted: formatTime(goodChoice.Arrival_time),
+            price_formatted: `$${goodChoice.price}`
+          });
+        }
+      }
+
+      // DEBUG: Log the final recommendations before sending
+      // console.log('=== FINAL RECOMMENDATIONS ===');
+      // Array.from(recommendations.values()).forEach(rec => {
+      //   console.log(`Flight ${rec.Flight_ID}: score = ${rec.score}, labels = ${rec.labels}`);
+      // });
+      // console.log('=============================');
+
+      //convert map to array and limit to 5 recommendations
+      let recommendation = Array.from(recommendations.values());
+
       //make sure to limit to at most 5 recommendations --> reduce choice overload
       //use slice!
-      recommendations = recommendations.slice(0, 5);
+      recommendation = recommendation.slice(0, 5);
 
       //send json with recommendation information
       res.json({
         success: true,
-        count: recommendations.length,
+        count: recommendation.length,
         route: { from, to },
-        recommendations: recommendations,
+        recommendations: recommendation,
         personalized: user_id ? true : false
       });
     }
