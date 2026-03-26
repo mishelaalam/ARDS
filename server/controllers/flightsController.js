@@ -6,7 +6,6 @@
  * getRecommendations
  * compareFlights
  * getFlightDetails
- * getAvailableSeats
  */
 
 const db = require('../db');
@@ -544,7 +543,7 @@ const compareFlights = (req, res) => {
       duration: flight1.Duration,
       duration_minutes: getMinutes(flight1.Duration),
       available_seats: flight1.Available_seats,
-      aircraft_type: flight1.Aircraft_type || 'Standard',
+      aircraft_type: flight1.Aircraft_type || "Standard",
       status: flight1.Status,
       origin: {
           code: flight1.origin_code,
@@ -582,7 +581,7 @@ const compareFlights = (req, res) => {
       duration: flight2.Duration,
       duration_minutes: getMinutes(flight2.Duration),
       available_seats: flight2.Available_seats,
-      aircraft_type: flight2.Aircraft_type || 'Standard',
+      aircraft_type: flight2.Aircraft_type || "Standard",
       status: flight2.Status,
       origin: {
           code: flight2.origin_code,
@@ -616,12 +615,12 @@ const compareFlights = (req, res) => {
         price: {
           flight_a: formattedFlight1.price_formatted,
           flight_b: formattedFlight2.price_formatted,
-          winner: formattedFlight1.price < formattedFlight2.price ? 'A' : formattedFlight2.price < formattedFlight1.price ? 'B' : 'tie'
+          winner: formattedFlight1.price < formattedFlight2.price ? 'A' : formattedFlight2.price < formattedFlight1.price ? 'B' : "tie"
         },
         duration: {
           flight_a: formattedFlight1.duration,
           flight_b: formattedFlight2.duration,
-          winner: formattedFlight1.duration_minutes < formattedFlight2.duration_minutes ? 'A' : formattedFlight2.duration_minutes < formattedFlight1.duration_minutes ? 'B' : 'tie'
+          winner: formattedFlight1.duration_minutes < formattedFlight2.duration_minutes ? 'A' : formattedFlight2.duration_minutes < formattedFlight1.duration_minutes ? 'B' : "tie"
         },
         //since this is for the comparison table, just list flight a and b information
         departure_time: {
@@ -637,21 +636,21 @@ const compareFlights = (req, res) => {
         available_seats: {
           flight_a: formattedFlight1.available_seats,
           flight_b: formattedFlight2.available_seats,
-          winner: formattedFlight1.available_seats > formattedFlight2.available_seats ? 'A' : formattedFlight2.available_seats > formattedFlight1.available_seats ? 'B' : 'tie'
+          winner: formattedFlight1.available_seats > formattedFlight2.available_seats ? 'A' : formattedFlight2.available_seats > formattedFlight1.available_seats ? 'B' : "tie"
         },
         checked_baggage: {
           flight_a: `${formattedFlight1.baggage.checked_bag_limit}kg`,
           flight_b: `${formattedFlight2.baggage.checked_bag_limit}kg`,
-          winner: formattedFlight1.baggage.checked_bag_limit > formattedFlight2.baggage.checked_bag_limit ? 'A' : formattedFlight2.baggage.checked_bag_limit > formattedFlight1.baggage.checked_bag_limit ? 'B' : 'tie'
+          winner: formattedFlight1.baggage.checked_bag_limit > formattedFlight2.baggage.checked_bag_limit ? 'A' : formattedFlight2.baggage.checked_bag_limit > formattedFlight1.baggage.checked_bag_limit ? 'B' : "tie"
         }
       },
 
       //a quick summary of which flight is cheaper in all categories
       //can use this for to give a quick an efficient summary for the user --> reduce time taken
       summary: {
-        cheaper: formattedFlight1.price < formattedFlight2.price ? 'flight_a' : formattedFlight2.price < formattedFlight1.price ? 'flight_b' : 'tie',
-        faster: formattedFlight1.duration_minutes < formattedFlight2.duration_minutes ? 'flight_a' : formattedFlight2.duration_minutes < formattedFlight1.duration_minutes ? 'flight_b' : 'tie',
-        more_seats: formattedFlight1.available_seats > formattedFlight2.available_seats ? 'flight_a' : formattedFlight2.available_seats > formattedFlight1.available_seats ? 'flight_b' : 'tie',
+        cheaper: formattedFlight1.price < formattedFlight2.price ? "flight_a" : formattedFlight2.price < formattedFlight1.price ? "flight_b" : "tie",
+        faster: formattedFlight1.duration_minutes < formattedFlight2.duration_minutes ? "flight_a" : formattedFlight2.duration_minutes < formattedFlight1.duration_minutes ? "flight_b" : "tie",
+        more_seats: formattedFlight1.available_seats > formattedFlight2.available_seats ? "flight_a" : formattedFlight2.available_seats > formattedFlight1.available_seats ? "flight_b" : "tie",
         price_difference: Math.abs(formattedFlight1.price - formattedFlight2.price),
         time_difference: Math.abs(formattedFlight1.duration_minutes - formattedFlight2.duration_minutes)
       }
@@ -665,4 +664,165 @@ const compareFlights = (req, res) => {
   });
 };
 
-module.exports = { searchFlights, getRecommendations, compareFlights };
+//MORE DETAILS --> FLIGHT DETAILS
+const getFlightDetails = (req, res) => {
+  //need the flight id to get more details on this flight
+  const { id } = req.params;
+
+  //sql query for all information
+  const sql = `SELECT 
+                  f.Flight_ID,
+                  f.Flight_number,
+                  f.Departure_time,
+                  f.Arrival_time,
+                  f.Duration,
+                  f.Base_price as price,
+                  f.Available_seats,
+                  f.Status,
+                  f.Aircraft_type,
+                  al.Airline_name as airline,
+                  al.Airline_ID,
+                  al.Country as airline_country,
+                  al.Contact_info as airline_contact,
+                  dep.Airport_Code as origin_code,
+                  dep.Airport_name as origin_name,
+                  dep.City as origin_city,
+                  dep.Country as origin_country,
+                  dep.Time_zone as origin_timezone,
+                  arr.Airport_Code as destination_code,
+                  arr.Airport_name as destination_name,
+                  arr.City as destination_city,
+                  arr.Country as destination_country,
+                  arr.Time_zone as destination_timezone,
+                  bp.Checked_bag_weight_limit,
+                  bp.Extra_bag_fee,
+                  bp.Overweight_fee_per_kg,
+                  bp.Carry_on_bag_allowed,
+                  bp.Personal_item_allowed,
+                  bp.Ticket_class
+              FROM FLIGHT f
+              JOIN AIRLINE al ON f.Airline_ID = al.Airline_ID
+              JOIN AIRPORT dep ON f.Departure_Airport_Code = dep.Airport_Code
+              JOIN AIRPORT arr ON f.Arrival_Airport_Code = arr.Airport_Code
+              LEFT JOIN BAGGAGE_POLICY bp ON al.Airline_ID = bp.Airline_ID
+              WHERE f.Flight_ID = ?`;
+  
+  db.query(sql, [id], (err, flights) => {
+    //if there is an error:
+    if (err) {
+      console.error("Error in getFlightDetails:", err);
+      return res.status(500).json({ 
+        success: false, 
+        error: err.message 
+      });
+    }
+
+    //if the flight is not found, give error
+    if (flights.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Flight not found"
+      });
+    }
+
+    //since flights returns all flights as its an array, just grab the first entry
+    const flight = flights[0];
+
+    //format duration to readable string
+    const formatDuration = (duration) => {
+      if (!duration) {
+        return '';
+      } 
+      const parts = duration.split(':');
+      const hours = parseInt(parts[0]);
+      const minutes = parseInt(parts[1]);
+      if (hours === 0) {
+        return `${minutes} minutes`;
+      }
+      if (minutes === 0) {
+        return `${hours} hour${hours > 1 ? 's' : ''}`;
+      }
+      return `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minutes`;
+    };
+        
+    //calculate estimated taxes (example: 12% of base price)
+    const taxes = Math.round(flight.price * 0.12);
+    const total = flight.price + taxes;
+        
+    //get metric details to return in JSON
+    const details = {
+      flight_id: flight.Flight_ID,
+      flight_number: flight.Flight_number,
+      airline: flight.airline,
+      aircraft_type: flight.Aircraft_type || 'Standard',
+      status: flight.Status,
+      
+      //schedule
+      departure: {
+        time: flight.Departure_time,
+        time_formatted: formatTime(flight.Departure_time),
+        airport_code: flight.origin_code,
+        airport_name: flight.origin_name,
+        city: flight.origin_city,
+        country: flight.origin_country,
+        timezone: flight.origin_timezone
+      },
+      arrival: {
+        time: flight.Arrival_time,
+        time_formatted: formatTime(flight.Arrival_time),
+        airport_code: flight.destination_code,
+        airport_name: flight.destination_name,
+        city: flight.destination_city,
+        country: flight.destination_country,
+        timezone: flight.destination_timezone
+      },
+      duration: {
+        raw: flight.Duration,
+        formatted: formatDuration(flight.Duration)
+      },
+      
+      //pricing
+      pricing: {
+        base_price: flight.price,
+        base_price_formatted: `$${flight.price}`,
+        taxes: taxes,
+        taxes_formatted: `$${taxes}`,
+        total: total,
+        total_formatted: `$${total}`
+      },
+      
+      //availability
+      availability: {
+        available_seats: flight.Available_seats,
+        seat_class: flight.Ticket_class || "Economy"
+      },
+      
+      //baggage Policy
+      baggage: {
+        checked_bag_limit: flight.Checked_bag_weight_limit,
+        checked_bag_limit_formatted: `${flight.Checked_bag_weight_limit}kg`,
+        extra_bag_fee: flight.Extra_bag_fee,
+        extra_bag_fee_formatted: `$${flight.Extra_bag_fee}`,
+        overweight_fee: flight.Overweight_fee_per_kg,
+        overweight_fee_formatted: `$${flight.Overweight_fee_per_kg}/kg`,
+        carry_on_allowed: flight.Carry_on_bag_allowed === 1,
+        personal_item_allowed: flight.Personal_item_allowed === 1
+      },
+      
+      //airline Info
+      airline_info: {
+        name: flight.airline,
+        country: flight.airline_country,
+        contact: flight.airline_contact
+      }
+    };
+    
+    //send json
+    res.json({
+      success: true,
+      flight: details
+    });
+  })
+};
+
+module.exports = { searchFlights, getRecommendations, compareFlights, getFlightDetails };

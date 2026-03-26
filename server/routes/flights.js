@@ -19,4 +19,7 @@ router.get('/recommendations', flightsController.getRecommendations);
 //compare multiple flights
 router.get('/compare', flightsController.compareFlights);
 
+//get flight details for "more details" model
+router.get('/:id/details', flightsController.getFlightDetails);
+
 module.exports = router;
