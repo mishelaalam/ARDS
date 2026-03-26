@@ -17,6 +17,6 @@ router.get('/search', flightsController.searchFlights);
 router.get('/recommendations', flightsController.getRecommendations);
 
 //compare multiple flights
-//router.get('/compare', flightsController.compareFlights);
+router.get('/compare', flightsController.compareFlights);
 
 module.exports = router;
