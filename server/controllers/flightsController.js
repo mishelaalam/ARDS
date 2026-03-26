@@ -247,7 +247,7 @@ const getRecommendations = (req, res) => {
                     Max_layovers
                     FROM USER_PREFERENCE WHERE User_ID = ?`;
       //query command
-      db.query(userSQL, [user_id], (err, prefernces) => {
+      db.query(userSQL, [user_id], (err, preferences) => {
         if (err) {
           console.error("Error getting preferences:", err);
 

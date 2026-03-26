@@ -16,4 +16,7 @@ router.get('/search', flightsController.searchFlights);
 //get personalized recommendations (top 3-5 flights)
 router.get('/recommendations', flightsController.getRecommendations);
 
+//compare multiple flights
+//router.get('/compare', flightsController.compareFlights);
+
 module.exports = router;
