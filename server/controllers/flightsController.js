@@ -149,7 +149,7 @@ const searchFlights = (req, res) => {
   db.query(sql, params, (err, flights) => { 
     //if there is an error, return json error
     if (err) {
-      console.error('Error in searchFlights:', err);
+      console.error("Error in searchFlights:", err);
       return res.status(500).json({
         success: false, //success --> checks if it was successful or not
         error: err.message 
@@ -164,5 +164,139 @@ const searchFlights = (req, res) => {
     });
   });
 };
+
+//2. RECOMMENDATIONS - Returns top 3-5 flights with labels
+const getRecommendations = (req, res) => {
+  const { from, to, passengers = 1, user_id = null, limit = 5 } = req.query;
+
+  //validate fields --> make sure that the user provides where they are going to and from where
+  if (!from || !to) {
+      return res.status(400).json({
+          success: false,
+          error: "Please provide departure and destination airports"
+      });
+  }
+
+  //1. get all available flights for that route
+  const flightsSql = `SELECT 
+                f.Flight_ID,
+                f.Flight_number,
+                f.Departure_time,
+                f.Arrival_time,
+                f.Duration,
+                f.Base_price as price,
+                f.Available_seats,
+                al.Airline_name as airline,
+                dep.Airport_Code as origin_code,
+                arr.Airport_Code as destination_code,
+                0 as stops
+            FROM FLIGHT f
+            JOIN AIRLINE al ON f.Airline_ID = al.Airline_ID
+            JOIN AIRPORT dep ON f.Departure_Airport_Code = dep.Airport_Code
+            JOIN AIRPORT arr ON f.Arrival_Airport_Code = arr.Airport_Code
+            WHERE f.Departure_Airport_Code = ?
+            AND f.Arrival_Airport_Code = ?
+            AND f.Available_seats >= ?
+            AND f.Status = 'On Time'
+            ORDER BY f.Base_price ASC
+            LIMIT 20`;
+
+  //query
+  db.query(flightsSql, [from, to, passengers], (err, flights) => {
+    //if there is an error, return json error
+    if(err) {
+      console.error("Error getting flights:", err);
+      return res.status(500).json({
+        success: false, //success --> checks if it was successful or not
+        error: err.message 
+      });
+    }
+
+    //if there are no flights, return no flights found for this route
+    if(flights.length == 0) {
+      return res.json({
+        success: true,
+        message: "No flights found for this route.",
+        recommendations: [] //recommendations list is empty
+      });
+    }
+
+    //if the user is logged in, get their preference and history
+    if(user_id) {
+      //get user preferences
+      let userSQL = `SELECT 
+                    Preferred_airlines, 
+                    Budget_min, Budget_max, 
+                    Preferred_departure_time, 
+                    Max_layovers
+                    FROM USER_PREFERENCE WHERE User_ID = ?`;
+      //query command
+      db.query(userSQL, [user_id], (err, prefernces) => {
+        if (err) {
+          console.error("Error getting preferences:", err);
+
+          //return proceedWwithRecommendation --> proceed with default recommendations
+          //if there is an error, return so we leave this part of code
+          return proceedWithRecommendations(flights, null, []);
+        }
+
+        //if there are user preferences or not (no error):
+        //get booking history
+        let bookingSQL = `SELECT DISTINCT al.Airline_name
+                         FROM BOOKING b
+                         JOIN FLIGHT f ON b.Outbound_Flight_ID = f.Flight_ID
+                         JOIN AIRLINE al ON f.Airline_ID = al.Airline_ID
+                         WHERE b.User_ID = ? AND b.Status = 'Confirmed'
+                         LIMIT 5`;
+
+        db.query(bookingSQL, [user_id], (err, history) => {
+          if (err) {
+            console.error('Error getting history:', err);
+            //return proceed with recommendation --> preferences can exist (start at first one) or null
+            return proceedWithRecommendations(flights, preferences[0] || null, []);
+          }
+
+          //with no error, proceed with reccomendations --> just with the existing history
+          proceedWithRecommendations(flights, preferences[0] || null, history);
+        });
+      });
+
+      //if the user is not logged in
+    } else {
+      //there is no user, just proceed with default recommendations
+      proceedWithRecommendations(flights, null, []);
+    }
+
+    //define proceedWithRecommendations
+    //this function will handle all the scoring of the flights --> compute the top 3-5
+    //take in the list of flights for the specified route, the userpreference and the booking history of the user
+    function proceedWithRecommendations(flights, userPreferences, bookingHistory) {
+      //score each flight
+      const scoredFlights = flights.map(flight => ({
+        ...flight, //go through each flight
+        score: calculateFlightScore(flight, userPreferences, bookingHistory) //call helper function calculateFlightScore
+      }));
+
+      //select the top recommendations
+      //recommendations will hold the top 3-5 flights based on their score
+      let recommendations = [];
+
+      //for this design, let us always include the cheapest one, the fastest, and best overall
+      //1. cheapest --> sort based on price
+      const cheapest = [...scoredFlights].sort((a, b) => a.price - b.price)[0];
+      if (cheapest) {
+        recommendations.push({
+          ...cheapest,
+          label: "Cheapest",
+          badge_color: "yellow",
+          departure_time_formatted: formatTime(cheapest.Departure_time),
+          
+        });
+      }
+
+    }
+
+  });
+}
 
 module.exports = { searchFlights };
