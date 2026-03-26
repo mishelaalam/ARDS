@@ -10,6 +10,10 @@ const express = require('express');
 const router = express.Router();
 const flightsController = require('../controllers/flightsController');
 
+//search flights with filters
 router.get('/search', flightsController.searchFlights);
+
+//get personalized recommendations (top 3-5 flights)
+router.get('/recommendations', flightsController.getRecommendations);
 
 module.exports = router;
