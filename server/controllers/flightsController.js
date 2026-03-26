@@ -11,6 +11,22 @@
 
 const db = require('../db');
 
+//helper function to format time
+const formatTime = (timeString) => {
+  //if no string provided, return empty string
+  if(!timeString){
+    return "";
+  }
+
+  //if string provided, format correctly
+  const parts = timeString.split(':');
+  const hour = parseInt(parts[0]);
+  const minute = parts[1];
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute} ${ampm}`;
+};
+
 //a helper function that will calculate the flight score for reccomendations
 //based on price, airline preference, booking history, departure time
 const calculateFlightScore = (flight, userPreferences, bookingHistory) => {
