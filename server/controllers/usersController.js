@@ -23,8 +23,7 @@ const getUserProfile = (req, res) => {
     }
 
     //sql query
-    let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, u.Date_Registered,
-                c.Loyalty_Points, c.Account_status
+    let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, u.Date_Registered, c.Loyalty_Points, c.Account_status
                 FROM USER u
                 LEFT JOIN CUSTOMER c ON u.User_ID = c.User_ID
                 WHERE u.User_ID = ?`
@@ -44,7 +43,7 @@ const getUserProfile = (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: "User not found"
-            })
+            });
         }
 
         //if here, success in finding user --> return their info
@@ -53,6 +52,83 @@ const getUserProfile = (req, res) => {
             user: users[0]
         });
     });
+};
+
+//2. UPDATE PERSONAL INFO
+const updateUserInfo = (req, res) => {
+    const { user_id } = req.params;
+
+    const { 
+        username, 
+        email, 
+        phone,
+        first_name,
+        last_name
+    } = req.body;
+
+    //if no user_id, return error
+    if(!user_id) {
+        return res.status(400).json({
+            success: false,
+            error: "User ID is required"
+        });
+    }
+
+    //check if the user exists
+    db.query('SELECT User_ID FROM USER WHERE User_ID = ?', [user_id], (err, users) => {
+        //error checking for fetching user
+        if(err) {
+            console.error("Error checking user:", err);
+            return res.status(500).json({
+                success: false,
+                error: "Database error"
+            });
+        }
+
+        //if there are no users, return error
+        if(users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "User not found"
+            });
+        }
+
+        //build a dynamic update query based on fields the user wishes to update
+        let updateFields = [];
+        let updateValues = [];
+
+        //if username is being updated, push username to fields and push the updated username to values
+        if(username) {
+            updateFields.push("Username = ?");
+            updateValues.push(username);
+        }
+        //same for rest of the body
+        if(email) {
+            updateFields.push("Email = ?");
+            updateValues.push(email);
+        }
+        if (phone) {
+            updateFields.push("Phone = ?");
+            updateValues.push(phone);
+        }
+        if (first_name) {
+            updateFields.push("First_name = ?");
+            updateValues.push(first_name);
+        }
+        if (last_name) {
+            updateFields.push("Last_name = ?");
+            updateValues.push(last_name);
+        }
+
+        //check if there is anything to update, if not return error json
+        if (updateFields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: "No fields provided to update"
+            });
+        }
+    });
+
 };
 
 
