@@ -107,29 +107,83 @@ const updateUserInfo = (req, res) => {
             updateFields.push("Email = ?");
             updateValues.push(email);
         }
-        if (phone) {
+        if(phone) {
             updateFields.push("Phone = ?");
             updateValues.push(phone);
         }
-        if (first_name) {
+        if(first_name) {
             updateFields.push("First_name = ?");
             updateValues.push(first_name);
         }
-        if (last_name) {
+        if(last_name) {
             updateFields.push("Last_name = ?");
             updateValues.push(last_name);
         }
 
         //check if there is anything to update, if not return error json
-        if (updateFields.length === 0) {
+        if(updateFields.length === 0) {
             return res.status(400).json({
                 success: false,
                 error: "No fields provided to update"
             });
         }
+
+        //add user_id to values array --> need so we can access which user to update
+        updateValues.push(user_id);
+
+        //build the sql update query
+        //make sure to updated all fields the user wants to update
+        const sql = `UPDATE USER SET ${updateFields.join(', ')} WHERE User_ID = ?`;
+
+        //send to database
+        db.query(sql, updateValues, (err, result) => {
+            //handle error
+            if(err) {
+                //handle duplicate email error
+                if(err.code === "ER_DUP_ENTRY") {
+                    return res.status(409).json({
+                        success: false,
+                        error: "Email already exists"
+                    });
+                }
+                //handle any other error
+                console.error("Error updating user:", err);
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to update user information"
+                });
+            }
+
+            //no errors --> proceed with updating
+            //get the updated user info (not including password) to send as json
+            let updateSQL = `SELECT User_ID, Username, Email, Phone, Date_Registered 
+                            FROM USER WHERE User_ID = ?`;
+            db.query(updateSQL, [user_id], (err, updatedUser) => {
+                //if we have reached here, the data has been successfully updated
+                //if err, the user has given the same information as before possibly 
+                //--> still send successfully, just no new updated info for that user
+                if(err) {
+                    return res.json({
+                        success: true,
+                        message: "User information updated successfully"
+                    });
+                }
+
+                //send updated json along with the new user information
+                res.json({
+                    success: true,
+                    message: "User information updated successfully",
+                    user: updatedUser[0]
+                });
+            });
+        });
     });
+};
+
+//3. UPDATE PASSWORD (seperate this to model like real world applications)
+const updateUserPassword = (req, res) => {
 
 };
 
 
-module.exports = { getUserProfile };
+module.exports = { getUserProfile, updateUserInfo, updateUserPassword };

@@ -11,4 +11,10 @@ const usersController = require('../controllers/usersController');
 //get user profile
 router.get('/:user_id/profile', usersController.getUserProfile);
 
+//update user personal information
+router.put('/:user_id', usersController.updateUserInfo);
+
+//update user password
+router.put('/:user_id/password', usersController.updateUserPassword);
+
 module.exports = router;
