@@ -180,9 +180,69 @@ const updateUserInfo = (req, res) => {
     });
 };
 
-//3. UPDATE PASSWORD (seperate this to model like real world applications)
+//3. UPDATE PASSWORD (seperate this to model like real world applications for security)
 const updateUserPassword = (req, res) => {
+    const { user_id } = req.params;
+    //to update their password, user must provide their current password
+    const { current_password, new_password } = req.body;
 
+    //if no user_id, current password, and new pass provided, throw error
+    if(!user_id || !current_password || !new_password) {
+        return res.status(400).json({
+            success: false,
+            error: "User ID, current password, and new password are required"
+        });
+    }
+
+    //first verify that the current password provided is correct
+    db.query(`SELECT Password_hash FROM USER WHERE User_ID = ?`, [user_id], (err, users) => {
+        //handle error
+        if(err) {
+            //print to console
+            console.error("Error checking password:", err);
+            //return json
+            return res.status(500).json({
+                success: false,
+                error: "Database error"
+            });
+        }
+
+        //if there are no users found for this user_id, return json error
+        if(users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No User Found"
+            });
+        }
+
+        //Now validate current password inputted
+        //if it is wrong, send an error json
+        if (users[0].Password_hash !== current_password) {
+            return res.status(401).json({
+                success: false,
+                error: "Current password is incorrect"
+            });
+        }
+
+        //if here, the user has seccessfully inputted the correct current password --> update to new password
+        db.query(`UPDATE USER SET Password_hash = ? WHERE User_ID = ?`, [new_password, user_id], (err, result) => {
+            //handle error
+            if(err) {
+                console.error("Error updating password:", err);
+                //return json
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to update password"
+                });
+            }
+
+            //if no error, send a success message
+            res.json({
+                success: true,
+                message: "Password updated successfully"
+            });
+        });
+    });
 };
 
 
