@@ -38,12 +38,20 @@ cd ARDS
 cd server
 npm install
 ```
+Set up authentication packages needed:
+```bash
+npm install bcryptjs jsonwebtoken
+npm audit fix
+```
 Create a `.env` file inside the `server` folder:
 ```
 DB_HOST=127.0.0.1
 DB_USER=root
 DB_PASSWORD=yourpassword
 DB_NAME=AIRPORT_RESERVATION_DATABASE
+
+# JWT Secret for authentication
+JWT_SECRET=your-super-secret-key-change-this-in-production-12345
 ```
 Then start the server:
 ```bash
