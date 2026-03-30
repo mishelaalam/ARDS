@@ -86,3 +86,55 @@ const register = (req, res) => {
 };
 
 //2. LOGIN --> simple email/password check
+const login = (req, res) => {
+    //need inputs email and password to login
+    const { email, password } = req.body;
+
+    //must input these fields, otherwise return fail
+    if(!email || !password) {
+        return res.status(400).json({
+            success: false,
+            error: "Email and password are required"
+        });
+    }
+
+    //sql query, check if the user exists in our database
+    let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, c.Loyalty_Points, c.Account_status
+                FROM USER u
+                LEFT JOIN CUSTOMER c ON u.User_ID = c.User_ID
+                WHERE u.Email = ? AND u.Password_hash = ?`;
+
+    db.query(sql, [email, password], (err, users) => {
+        //handle error for this query
+        if(err) {
+            return res.status(500).json({ success: false, error: err.message });
+        }
+
+        //if no user in database matching what the user had inputted, return fail
+        if(users.length === 0) {
+            return res.status(401).json({
+                success: false,
+                error: "Invalid email or password"
+            });
+        }
+
+        //if here, successfull login, get the user that matches the account the user wants to login to
+        const user = users[0];
+
+        //send json information for successful login
+        res.json({
+            success: true,
+            message: "Login successful",
+            user: {
+                user_id: user.User_ID,
+                username: user.Username,
+                email: user.Email,
+                phone: user.Phone,
+                loyalty_points: user.Loyalty_Points || 0,
+                account_status: user.Account_status || "Active"
+            }
+        });
+    });
+};
+
+module.exports = { register, login };
