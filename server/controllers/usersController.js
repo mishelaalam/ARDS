@@ -111,6 +111,7 @@ const updateUserInfo = (req, res) => {
             updateFields.push("Phone = ?");
             updateValues.push(phone);
         }
+        //not sure if we will impliment first and last name but here just in case
         if(first_name) {
             updateFields.push("First_name = ?");
             updateValues.push(first_name);
