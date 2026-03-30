@@ -1,4 +1,3 @@
-// coming soon
 /**
  * This file will control all authentication queries that can be done by the user
  * It will contain the actual logic + SQL queries that is going to be called in auth.js
@@ -71,12 +70,12 @@ const register = (req, res) => {
                 db.query(`INSERT INTO CUSTOMER (User_ID, Loyalty_Points, Account_status) VALUES (?, ?, ?)`, [nextId, 0, 'Active'], (err, result) => {
                     res.status(201).json({
                         success: true,
-                        message: 'Account created successfully',
+                        message: "Account created successfully",
                         user: {
                             user_id: nextId,
                             username: username,
                             email: email,
-                            phone: phone || null
+                            phone: phone || null //if no phone provided, fill null
                         }
                     });
                 });
@@ -130,8 +129,8 @@ const login = (req, res) => {
                 username: user.Username,
                 email: user.Email,
                 phone: user.Phone,
-                loyalty_points: user.Loyalty_Points || 0,
-                account_status: user.Account_status || "Active"
+                loyalty_points: user.Loyalty_Points || 0, //if no loyalty points display 0
+                account_status: user.Account_status || "Active" //if no status, display active
             }
         });
     });
