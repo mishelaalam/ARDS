@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "express": "^5.2.1",
+    "mysql2": "^3.20.0",
+    "react-router-dom": "^7.13.2"
+  },
+  "name": "471-project",
+  "version": "1.0.0",
+  "description": "A simplified flight booking web application that reduces choice overload by displaying only the top 3-5 recommended flights based on user preferences.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mishelaalam/ARDS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mishelaalam/ARDS/issues"
+  },
+  "homepage": "https://github.com/mishelaalam/ARDS#readme"
+}
