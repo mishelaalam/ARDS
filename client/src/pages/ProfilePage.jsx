@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateUser, changePassword } from '../api/users';
 import { getUserBookings } from '../api/bookings';
-import BookingCard from '../components/bookings/BookingCard';
+// import BookingCard from '../components/bookings/BookingCard';
 
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth();
