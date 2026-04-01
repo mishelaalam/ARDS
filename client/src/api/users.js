@@ -11,7 +11,8 @@ export const updateUserInfo = async (user_id, data) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
-  return res.json();
+  const responseData = await res.json();
+  return responseData;
 };
 
 export const updatePassword = async (user_id, current_password, new_password) => {
@@ -20,5 +21,6 @@ export const updatePassword = async (user_id, current_password, new_password) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ current_password, new_password })
   });
-  return res.json();
+  const responseData = await res.json();
+  return responseData;
 };

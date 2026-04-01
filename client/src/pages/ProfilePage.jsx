@@ -31,12 +31,9 @@ const ProfilePage = () => {
 
   //form states --> for standard profile changes
   const [profileForm, setProfileForm] = useState({
-    name: "",
+    username: "",
     email: "",
     phone: "",
-    passportNumber: "",
-    nationality: "",
-    dateOfBirth: ""
   });
 
   //for changing password --> set a seperate form
@@ -50,12 +47,9 @@ const ProfilePage = () => {
   useEffect(() => {
     if(user) {
       setProfileForm({
-        name: user.name || "",
+        username: user.username || "",
         email: user.email || "",
         phone: user.phone || '',
-        passportNumber: user.passportNumber || '',
-        nationality: user.nationality || '',
-        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : ""
       });
     }
   }, [user]);
@@ -78,14 +72,42 @@ const ProfilePage = () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
 
-    //await user response for updating user information
-    updateUserInfo(profileForm) //--> set in profile Form
-      .then(response => {
-        setUser(response.data); //setUser response to the data given by the user
-        setIsEditing(false); //setIsEditing to false --> done editing
-        //success message
-        setMessage({ type: "success", text: "Profile updated successfully!" });
+    //get user_id from user object
+    const userId = user.User_ID || user.user_id;
 
+    //if no userId found send error
+    if(!userId) {
+      setMessage({ type: "error", text: "User ID not found" });
+      setLoading(false);
+      return;
+    }
+
+    console.log('Calling updateUserInfo with:', { userId, profileForm });
+
+    //await user response for updating user information
+    //call update with userID and profile Form
+    updateUserInfo(userId, profileForm) //--> set in profile Form
+      .then(response => {
+        
+        if(response.success) {
+          //update the user in context with the new data
+          const updatedUser = {
+            ...user,
+            username: profileForm.username,
+            email: profileForm.email,
+            phone: profileForm.phone
+          };
+          setUser(updatedUser); //setUser response to the data given by the user
+          setIsEditing(false); //setIsEditing to false --> done editing
+          //success message
+          setMessage({ type: "success", text: "Profile updated successfully!" });
+        
+        //if fail
+        } else {
+          setMessage({ type: "error", text: response.error || "Failed to update profile" });
+        }
+
+        //set a timeout in case of any error
         setTimeout(() => setMessage({ type: "", text: "" }), 3000); //set timeout, not using async await
         setLoading(false); //change loading to false after the operation
       })
@@ -93,7 +115,7 @@ const ProfilePage = () => {
       .catch(error => {
         setMessage({ 
           type: "error", 
-          text: error.response?.data?.message || "Failed to update profile" 
+          text: "Failed to update profile" 
         });
         setLoading(false); //once error is done, set loading to false
       });
@@ -119,25 +141,37 @@ const ProfilePage = () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
 
+    //like updating personal profile, get user_id from user object
+    const userId = user.User_ID || user.user_id;
+    
+    if (!userId) {
+      setMessage({ type: "error", text: "User ID not found" });
+      setLoading(false);
+      return;
+    }
+
     //update passwordForm
-    updatePassword({
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword
-    })
+    //call updatePassword with user_id, current password, and new password
+    updatePassword(userId, passwordForm.currentPassword, passwordForm.newPassword)
       .then(() => {
-        setPasswordForm({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: ""
-        });
-        setMessage({ type: "success", text: "Password changed successfully!" });
+        if(response.success) {
+          setPasswordForm({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          });
+
+          setMessage({ type: "success", text: "Password changed successfully!" });
+        } else {
+          setMessage({ type: "error", text: response.error || "Failed to change password" });
+        }
         setTimeout(() => setMessage({ type: "", text: "" }), 3000);
         setLoading(false);
       })
       .catch(error => {
         setMessage({ 
           type: "error", 
-          text: error.response?.data?.message || "Failed to change password" 
+          text: "Failed to change password" 
         });
         setLoading(false);
       });
@@ -189,6 +223,99 @@ const ProfilePage = () => {
         )}
 
         {/* Profile Information Section */}
+        <div className = "bg-white rounded-lg shadow mb-8">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Personal Information</h3>
+                {!isEditing ? (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className = "px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-600 rounded-md hover:bg-blue-50">
+                    Edit Profile
+                  </button> 
+                ) : (
+                  <button
+                    onClick={() => {setIsEditing(false);
+                      setProfileForm({
+                        username: user.username || "",
+                        email: user.email || "",
+                        phone: user.phone || '',
+                      });
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                    Cancel
+                    </button>
+                )}
+            </div>
+            
+            <form onSubmit={handleProfileSubmit}>
+             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {/*Username Field*/}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={profileForm.username || ""}
+                  onChange={handleProfileChange}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+              </div>
+
+              {/*Email Address Field*/}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={profileForm.email || ""}
+                  onChange={handleProfileChange}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+              </div>
+
+              {/*Phone Number Field*/}
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={profileForm.phone || ""}
+                    onChange={handleProfileChange}
+                    disabled={!isEditing}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+              </div>
+             </div>
+
+             {isEditing && (
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+             )}
+            </form>
+          </div>
+        </div>
+
+        {/* Change Password Section */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h3>
+          </div>
+        </div>
 
       </div>
     </div>

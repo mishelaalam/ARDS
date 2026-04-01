@@ -61,8 +61,6 @@ const updateUserInfo = (req, res) => {
         username, 
         email, 
         phone,
-        first_name,
-        last_name
     } = req.body;
 
     //if no user_id, return error
@@ -109,15 +107,6 @@ const updateUserInfo = (req, res) => {
         if(phone) {
             updateFields.push("Phone = ?");
             updateValues.push(phone);
-        }
-        //not sure if we will impliment first and last name but here just in case
-        if(first_name) {
-            updateFields.push("First_name = ?");
-            updateValues.push(first_name);
-        }
-        if(last_name) {
-            updateFields.push("Last_name = ?");
-            updateValues.push(last_name);
         }
 
         //check if there is anything to update, if not return error json
