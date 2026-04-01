@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { updateUserInfo, updatePassword } from '../api/users';
+import { getPreferences, updatePreferences } from '../api/searches';
 
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth();
@@ -43,6 +44,21 @@ const ProfilePage = () => {
     confirmPassword: ""
   });
 
+  //preferences form states
+  const [preferences, setPreferences] = useState({
+    preferred_airlines: "",
+    seat_preference: "",
+    budget_min: "",
+    budget_max: "",
+    meal_preference: "",
+    preferred_departure_time: "",
+    max_layovers: "",
+    preferred_checked_bags: "",
+    preferred_carry_on_bags: "",
+    preferred_trip_type: ""
+  });
+  const [isEditingPrefs, setIsEditingPrefs] = useState(false);
+
   //load user data when components mount
   useEffect(() => {
     if(user) {
@@ -54,6 +70,87 @@ const ProfilePage = () => {
     }
   }, [user]);
 
+  //============== HANDLE PREFERENCES --> ALL FUNCTIONS =============
+
+  //load preferences when tab changes to preferences
+  useEffect(() => {
+    if (user) {
+      loadPreferences();
+    }
+  }, [user]);
+
+  const loadPreferences = () => {
+    const userId = user.user_id;
+    if (!userId) return;
+
+    setLoading(true);
+    getPreferences(userId)
+      .then(response => {
+        if (response.success && response.preferences) {
+          setPreferences({
+            preferred_airlines: response.preferences.Preferred_airlines || "",
+            seat_preference: response.preferences.Seat_preference || "",
+            budget_min: response.preferences.Budget_min || "",
+            budget_max: response.preferences.Budget_max || "",
+            meal_preference: response.preferences.Meal_preference || "",
+            preferred_departure_time: response.preferences.Preferred_departure_time || "",
+            max_layovers: response.preferences.Max_layovers || "",
+            preferred_checked_bags: response.preferences.Preferred_checked_bags || "",
+            preferred_carry_on_bags: response.preferences.Preferred_carry_on_bags || "",
+            preferred_trip_type: response.preferences.Preferred_trip_type || ""
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error loading preferences:', error);
+      })
+      .finally(() => setLoading(false));
+  };
+
+const handlePreferencesChange = (e) => {
+  const { name, value } = e.target;
+  setPreferences(prev => ({ ...prev, [name]: value }));
+};
+
+const handlePreferencesSubmit = (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setMessage({ type: "", text: "" });
+
+  const userId = user.user_id;
+
+  if (!userId) {
+    setMessage({ type: "error", text: "User ID not found" });
+    setLoading(false);
+    return;
+  }
+
+  //filter out empty values
+  const updateData = {};
+  Object.keys(preferences).forEach(key => {
+    if (preferences[key] !== "" && preferences[key] !== null && preferences[key] !== undefined) {
+      updateData[key] = preferences[key];
+    }
+  });
+
+  updatePreferences(userId, updateData)
+    .then(response => {
+      if (response.success) {
+        setIsEditingPrefs(false);
+        setMessage({ type: "success", text: "Preferences updated successfully!" });
+      } else {
+        setMessage({ type: "error", text: response.error || "Failed to update preferences" });
+      }
+      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+      setLoading(false);
+    })
+    .catch(error => {
+      setMessage({ type: "error", text: "Failed to update preferences" });
+      setLoading(false);
+    });
+  };
+
+  //============== PROFILE AND PASSWORD FUNCTIONS =======================
   //function that handles profile changes
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -210,7 +307,7 @@ const ProfilePage = () => {
         {/* Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
-          <p className="text-gray-600 mt-1">Manage your personal information and security settings</p>
+          <p className="text-gray-600 mt-1">Manage your personal information, security settings, and preferences</p>
         </div>
 
         {/* Message Display */}
@@ -263,6 +360,7 @@ const ProfilePage = () => {
                   value={profileForm.username || ""}
                   onChange={handleProfileChange}
                   disabled={!isEditing}
+                  autoComplete="username"
                   className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                       !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
               </div>
@@ -278,6 +376,7 @@ const ProfilePage = () => {
                   value={profileForm.email || ""}
                   onChange={handleProfileChange}
                   disabled={!isEditing}
+                  autoComplete="email"
                   className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                       !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
               </div>
@@ -293,6 +392,7 @@ const ProfilePage = () => {
                     value={profileForm.phone || ""}
                     onChange={handleProfileChange}
                     disabled={!isEditing}
+                    autoComplete="tel"
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                       !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
               </div>
@@ -313,7 +413,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Change Password Section */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow mb-8">
           <div className="p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h3>
              <form onSubmit={handlePasswordSubmit} className="max-w-md">
@@ -327,6 +427,7 @@ const ProfilePage = () => {
                   value={passwordForm.currentPassword}
                   onChange={handlePasswordChange}
                   required
+                  autoComplete="current-password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
               </div>
 
@@ -340,6 +441,7 @@ const ProfilePage = () => {
                   value={passwordForm.newPassword}
                   onChange={handlePasswordChange}
                   required
+                  autoComplete="new-password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
                 <p className="mt-1 text-xs text-gray-500">Password must be at least 5 characters</p>
               </div>
@@ -354,6 +456,7 @@ const ProfilePage = () => {
                   value={passwordForm.confirmPassword}
                   onChange={handlePasswordChange}
                   required
+                  autoComplete="new-password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
               </div>
 
@@ -364,6 +467,230 @@ const ProfilePage = () => {
                 {loading ? "Changing Password..." : "Change Password"}
               </button>
              </form>
+          </div>
+        </div>
+
+        {/* Flight Preferences Section */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Flight Preferences</h3>
+              {!isEditingPrefs ? (
+                <button
+                  onClick={() => setIsEditingPrefs(true)}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-600 rounded-md hover:bg-blue-50">
+                  Edit Preferences
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsEditingPrefs(false);
+                    loadPreferences();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                  Cancel
+                </button>
+              )}
+            </div>
+            
+            <form onSubmit={handlePreferencesSubmit}>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label htmlFor="preferred_airlines" className="block text-sm font-medium text-gray-700 mb-2">
+                    Preferred Airlines
+                  </label>
+                  <input
+                    id="preferred_airlines"
+                    type="text"
+                    name="preferred_airlines"
+                    value={preferences.preferred_airlines || ""}
+                    onChange={handlePreferencesChange}
+                    disabled={!isEditingPrefs}
+                    placeholder="e.g., Air Canada, WestJet"
+                    autoComplete="off"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                </div>
+
+                <div>
+                  <label htmlFor="seat_preference" className="block text-sm font-medium text-gray-700 mb-2">
+                    Seat Preference
+                  </label>
+                  <select
+                    id="seat_preference"
+                    name="seat_preference"
+                    value={preferences.seat_preference || ""}
+                    onChange={handlePreferencesChange}
+                    disabled={!isEditingPrefs}
+                    autoComplete="off"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}>
+                    <option value="">Select preference</option>
+                    <option value="Window">Window</option>
+                    <option value="Aisle">Aisle</option>
+                    <option value="Middle">Middle</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="budget_min" className="block text-sm font-medium text-gray-700 mb-2">
+                      Budget Min ($)
+                    </label>
+                    <input
+                      id="budget_min"
+                      type="number"
+                      name="budget_min"
+                      value={preferences.budget_min || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                  <div>
+                    <label htmlFor="budget_max" className="block text-sm font-medium text-gray-700 mb-2">
+                      Budget Max ($)
+                    </label>
+                    <input
+                      id="budget_max"
+                      type="number"
+                      name="budget_max"
+                      value={preferences.budget_max || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="meal_preference" className="block text-sm font-medium text-gray-700 mb-2">
+                    Meal Preference
+                  </label>
+                  <select
+                    id="meal_preference"
+                    name="meal_preference"
+                    value={preferences.meal_preference || ""}
+                    onChange={handlePreferencesChange}
+                    disabled={!isEditingPrefs}
+                    autoComplete="off"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}>
+                    <option value="">Select preference</option>
+                    <option value="Vegetarian">Vegetarian</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="Gluten Free">Gluten Free</option>
+                    <option value="Kosher">Kosher</option>
+                    <option value="Halal">Halal</option>
+                    <option value="None">No preference</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="preferred_trip_type" className="block text-sm font-medium text-gray-700 mb-2">
+                    Preferred Trip Type
+                  </label>
+                  <select
+                    id="preferred_trip_type"
+                    name="preferred_trip_type"
+                    value={preferences.preferred_trip_type || ""}
+                    onChange={handlePreferencesChange}
+                    disabled={!isEditingPrefs}
+                    autoComplete="off"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}>
+                    <option value="">Select preference</option>
+                    <option value="One Way">One Way</option>
+                    <option value="Round Trip">Round Trip</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="max_layovers" className="block text-sm font-medium text-gray-700 mb-2">
+                      Max Layovers
+                    </label>
+                    <input
+                      id="max_layovers"
+                      type="number"
+                      name="max_layovers"
+                      value={preferences.max_layovers || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      min="0"
+                      max="5"
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                  <div>
+                    <label htmlFor="preferred_departure_time" className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Departure Time
+                    </label>
+                    <input
+                      id="preferred_departure_time"
+                      type="time"
+                      name="preferred_departure_time"
+                      value={preferences.preferred_departure_time || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="preferred_checked_bags" className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Checked Bags
+                    </label>
+                    <input
+                      id="preferred_checked_bags"
+                      type="number"
+                      name="preferred_checked_bags"
+                      value={preferences.preferred_checked_bags || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      min="0"
+                      max="5"
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                  <div>
+                    <label htmlFor="preferred_carry_on_bags" className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Carry-on Bags
+                    </label>
+                    <input
+                      id="preferred_carry_on_bags"
+                      type="number"
+                      name="preferred_carry_on_bags"
+                      value={preferences.preferred_carry_on_bags || ""}
+                      onChange={handlePreferencesChange}
+                      disabled={!isEditingPrefs}
+                      min="0"
+                      max="2"
+                      autoComplete="off"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        !isEditingPrefs ? "bg-gray-50 text-gray-500" : "bg-white"}`}/>
+                  </div>
+                </div>
+              </div>
+
+              {isEditingPrefs && (
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50">
+                    {loading ? "Saving..." : "Save Preferences"}
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
         </div>
       </div>
