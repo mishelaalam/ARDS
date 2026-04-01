@@ -153,7 +153,7 @@ const ProfilePage = () => {
     //update passwordForm
     //call updatePassword with user_id, current password, and new password
     updatePassword(userId, passwordForm.currentPassword, passwordForm.newPassword)
-      .then(() => {
+      .then(response => {
         if(response.success) {
           setPasswordForm({
             currentPassword: "",
@@ -163,12 +163,14 @@ const ProfilePage = () => {
 
           setMessage({ type: "success", text: "Password changed successfully!" });
         } else {
+          console.log("here");
           setMessage({ type: "error", text: response.error || "Failed to change password" });
         }
         setTimeout(() => setMessage({ type: "", text: "" }), 3000);
         setLoading(false);
       })
       .catch(error => {
+        console.log("no");
         setMessage({ 
           type: "error", 
           text: "Failed to change password" 
@@ -314,9 +316,56 @@ const ProfilePage = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h3>
+             <form onSubmit={handlePasswordSubmit} className="max-w-md">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                <p className="mt-1 text-xs text-gray-500">Password must be at least 5 characters</p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {loading ? "Changing Password..." : "Change Password"}
+              </button>
+             </form>
           </div>
         </div>
-
       </div>
     </div>
   );
