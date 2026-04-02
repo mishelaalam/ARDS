@@ -154,12 +154,12 @@ const handlePreferencesSubmit = (e) => {
       }
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
       setLoading(false);
-      })
-      .catch(error => {
-        setMessage({ type: "error", text: "Failed to update preferences" });
-        setLoading(false);
-      });
-    };
+    })
+    .catch(error => {
+      setMessage({ type: "error", text: "Failed to update preferences" });
+      setLoading(false);
+    });
+  };
 
   //============== PROFILE AND PASSWORD FUNCTIONS =======================
   //function that handles profile changes
