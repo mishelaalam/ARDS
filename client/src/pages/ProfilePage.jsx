@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { updateUserInfo, updatePassword } from '../api/users';
-import { getPreferences, updatePreferences } from '../api/searches';
+import { getPreferences, updatePreferences, savePreferences } from '../api/searches';
 
 const ProfilePage = () => {
   const { user, setUser, logout } = useAuth();
@@ -133,22 +133,33 @@ const handlePreferencesSubmit = (e) => {
     }
   });
 
-  updatePreferences(userId, updateData)
+  //handle updating and saving preferences, in case the user has not set a preference yet
+  getPreferences(userId)
+    .then(response => {
+      if(response.success && response.preferences) {
+        //preference exists, update them
+        return updatePreferences(userId, updateData);
+      } else {
+        //no preference found, save a new one
+        return savePreferences(userId, updateData);
+      }
+    })
+    //normal message responses
     .then(response => {
       if (response.success) {
         setIsEditingPrefs(false);
         setMessage({ type: "success", text: "Preferences updated successfully!" });
       } else {
-        setMessage({ type: "error", text: response.error || "Failed to update preferences" });
+          setMessage({ type: "error", text: response.error || "Failed to update preferences" });
       }
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
       setLoading(false);
-    })
-    .catch(error => {
-      setMessage({ type: "error", text: "Failed to update preferences" });
-      setLoading(false);
-    });
-  };
+      })
+      .catch(error => {
+        setMessage({ type: "error", text: "Failed to update preferences" });
+        setLoading(false);
+      });
+    };
 
   //============== PROFILE AND PASSWORD FUNCTIONS =======================
   //function that handles profile changes
