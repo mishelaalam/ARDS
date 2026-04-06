@@ -129,31 +129,41 @@ const savePreferences = (req, res) => {
         return res.status(400).json({ success: false, error: "User ID is required" });
     }
 
-    const sql = `INSERT INTO USER_PREFERENCE 
-                (User_ID, Preferred_airlines, Seat_preference, Budget_min, Budget_max, Meal_preference, Preferred_departure_time, Max_layovers, Preferred_checked_bags, Preferred_carry_on_bags, Preferred_trip_type) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    const params = [
-        user_id, preferred_airlines || null, seat_preference || null,
-        budget_min || null, budget_max || null, meal_preference || null,
-        preferred_departure_time || null, max_layovers || null,
-        preferred_checked_bags || null, preferred_carry_on_bags || null,
-        preferred_trip_type || null
-    ];
-
-    db.query(sql, params, (err, result) => {
+    //first, get the next Preference_ID
+    db.query(`SELECT MAX(Preference_ID) as maxId FROM USER_PREFERENCE`, (err, result) => {
         if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({ success: false, error: "Preferences already exist for this user. Use update instead." });
-            }
-            console.error("Error saving preferences:", err);
-            return res.status(500).json({ success: false, error: "Failed to save preferences" });
+            console.error("Error getting next ID:", err);
+            return res.status(500).json({ success: false, error: "Database error" });
         }
 
-        res.json({
-            success: true,
-            message: "Preferences saved successfully",
-            preference_id: result.insertId
+        const nextPrefId = (result[0].maxId || 0) + 1;
+
+        const sql = `INSERT INTO USER_PREFERENCE 
+                    (Preference_ID, User_ID, Preferred_airlines, Seat_preference, Budget_min, Budget_max, Meal_preference, Preferred_departure_time, Max_layovers, Preferred_checked_bags, Preferred_carry_on_bags, Preferred_trip_type) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const params = [
+            nextPrefId, user_id, preferred_airlines || null, seat_preference || null,
+            budget_min || null, budget_max || null, meal_preference || null,
+            preferred_departure_time || null, max_layovers || null,
+            preferred_checked_bags || null, preferred_carry_on_bags || null,
+            preferred_trip_type || null
+        ];
+
+        db.query(sql, params, (err, result) => {
+            if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(409).json({ success: false, error: "Preferences already exist for this user. Use update instead." });
+                }
+                console.error("Error saving preferences:", err);
+                return res.status(500).json({ success: false, error: "Failed to save preferences" });
+            }
+
+            res.json({
+                success: true,
+                message: "Preferences saved successfully",
+                preference_id: result.insertId
+            });
         });
     });
 };
