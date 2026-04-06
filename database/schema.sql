@@ -105,7 +105,7 @@ CREATE TABLE FLIGHT (
 );
 
 CREATE TABLE BOOKING (
-    Booking_ID int NOT NULL,
+    Booking_ID int NOT NULL AUTO_INCREMENT,
     User_ID int NOT NULL,
     Total_cost int NOT NULL,
     Status varchar(255) NOT NULL,
