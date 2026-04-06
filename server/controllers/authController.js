@@ -97,10 +97,18 @@ const login = (req, res) => {
         });
     }
 
-    //sql query, check if the user exists in our database
-    let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, c.Loyalty_Points, c.Account_status
+    //sql query, check if the user exists in our database and if they are an admin
+    // let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, c.Loyalty_Points, c.Account_status
+    //             FROM USER u
+    //             LEFT JOIN CUSTOMER c ON u.User_ID = c.User_ID
+    //             WHERE u.Email = ? AND u.Password_hash = ?`;
+
+    let sql = `SELECT u.User_ID, u.Username, u.Email, u.Phone, c.Loyalty_Points, c.Account_status,
+                      a.Role as admin_role, a.Access_Level,
+                      CASE WHEN a.User_ID IS NOT NULL THEN true ELSE false END as is_admin
                 FROM USER u
                 LEFT JOIN CUSTOMER c ON u.User_ID = c.User_ID
+                LEFT JOIN ADMIN a ON u.User_ID = a.User_ID
                 WHERE u.Email = ? AND u.Password_hash = ?`;
 
     db.query(sql, [email, password], (err, users) => {
@@ -130,7 +138,11 @@ const login = (req, res) => {
                 email: user.Email,
                 phone: user.Phone,
                 loyalty_points: user.Loyalty_Points || 0, //if no loyalty points display 0
-                account_status: user.Account_status || "Active" //if no status, display active
+                account_status: user.Account_status || "Active", //if no status, display active
+                //admin stuff
+                is_admin: user.is_admin || false,
+                admin_role: user.admin_role || null,
+                access_level: user.Access_level || null
             }
         });
     });

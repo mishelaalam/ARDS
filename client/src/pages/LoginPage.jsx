@@ -48,7 +48,12 @@ const LoginPage = () => {
           setError(res.error);
         } else {
           authLogin(res.user);
-          navigate('/dashboard');
+          //redirect based on admin status
+          if(res.user.is_admin) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
         }
       }
     } catch (err) {
