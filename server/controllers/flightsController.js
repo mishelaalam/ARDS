@@ -825,4 +825,16 @@ const getFlightDetails = (req, res) => {
   })
 };
 
-module.exports = { searchFlights, getRecommendations, compareFlights, getFlightDetails };
+// GET ALL AIRPORTS
+const getAirports = (req, res) => {
+  const sql = `SELECT Airport_Code, Airport_name, City, Country FROM AIRPORT ORDER BY City ASC`;
+  db.query(sql, (err, airports) => {
+    if (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+    res.json({ success: true, airports });
+  });
+};
+
+
+module.exports = { searchFlights, getRecommendations, compareFlights, getFlightDetails, getAirports };

@@ -68,7 +68,7 @@ const BookingPage = () => {
     try {
       const res = await createBooking({
         user_id: user.user_id,
-        flight_id: flight.Flight_ID,
+        flight_id: flight.Flight_ID || flight.flight_id,
         num_passengers: numPassengers,
         booking_type: bookingType,
       });

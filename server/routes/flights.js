@@ -22,4 +22,7 @@ router.get('/compare', flightsController.compareFlights);
 //get flight details for "more details" model
 router.get('/:id/details', flightsController.getFlightDetails);
 
+// get all airports for dropdown
+router.get('/airports', flightsController.getAirports);
+
 module.exports = router;

@@ -21,3 +21,8 @@ export const getFlightDetails = async (id) => {
   const res = await fetch(`${BASE_URL}/flights/${id}/details`);
   return res.json();
 };
+
+export const getAirports = async () => {
+  const res = await fetch(`${BASE_URL}/flights/airports`);
+  return res.json();
+};
