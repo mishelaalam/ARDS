@@ -16,6 +16,16 @@ const Dashboard = () => {
       <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-600">✈ ARDS</h1>
         <div className="flex items-center gap-6">
+          {/* Show Admin Dashboard button only if user is admin */}
+          {user?.is_admin && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="text-purple-600 hover:text-purple-800 font-medium"
+            >
+              Go to Admin Dashboard
+            </button>
+          )}
+
           <button onClick={() => navigate('/search')} className="text-gray-600 hover:text-blue-600 font-medium">Search Flights</button>
           <button onClick={() => navigate('/bookings')} className="text-gray-600 hover:text-blue-600 font-medium">My Bookings</button>
           <button onClick={() => navigate('/profile')} className="text-gray-600 hover:text-blue-600 font-medium">Profile</button>
