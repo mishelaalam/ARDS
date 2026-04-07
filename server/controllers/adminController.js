@@ -180,6 +180,7 @@ const getAllFlights = (req, res) => {
                     f.Base_price,
                     f.Status,
                     f.Available_seats,
+                    f.Aircraft_type,
                     al.Airline_name as airline,
                     dep.Airport_Code as origin_code,
                     dep.City as origin_city,

@@ -92,11 +92,12 @@ const calculateFlightScore = (flight, userPreferences, bookingHistory) => {
 //1. SEARCH --> basic search with filters, for users who want to see all flights like admin for instance
 const searchFlights = (req, res) => {
   //filtering categories
-  const { from, to, departure_date, passengers = 1, min_price, max_price, airline, sort_by = 'price', limit = 10 } = req.query;
+  const { from, to, flight_number, departure_date, min_price, max_price, airline, status, sort_by = 'flight_id', limit = 50 } = req.query;
   
   //sql query based on the above category
   let sql = `SELECT 
               f.Flight_ID,
+              f.Airline_ID,
               f.Flight_number,
               f.Departure_time,
               f.Arrival_time,
@@ -104,31 +105,39 @@ const searchFlights = (req, res) => {
               f.Base_price as price,
               f.Available_seats,
               f.Status,
+              f.Aircraft_type,
               al.Airline_name as airline,
               dep.Airport_Code as origin_code,
+              dep.City as origin_city,
               dep.Airport_name as origin_name,
               arr.Airport_Code as destination_code,
+              arr.City as destination_city,
               arr.Airport_name as destination_name,
               0 as stops
           FROM FLIGHT f
           JOIN AIRLINE al ON f.Airline_ID = al.Airline_ID
           JOIN AIRPORT dep ON f.Departure_Airport_Code = dep.Airport_Code
           JOIN AIRPORT arr ON f.Arrival_Airport_Code = arr.Airport_Code
-          WHERE f.Available_seats >= ?
-          AND f.Status = 'On Time'`; 
+          WHERE 1=1`; //change to 1=1 so we can add conditions dynamically
 
   //the params that are pushed to the sql query based on what the user inputs
-  const params = [passengers];
+  const params = [];
+
+  //search by flight number (partial match allowed)
+  if (flight_number) {
+    sql += ` AND f.Flight_number LIKE ?`;
+    params.push(`%${flight_number}%`);
+  }
 
   //for each category to filter, add the SQL requirment
   if (from) {
-    sql += ` AND f.Departure_Airport_Code = ?`;
-    params.push(from);
+    sql += ` AND (dep.Airport_Code LIKE ? OR dep.City LIKE ? OR dep.Airport_name LIKE ?)`;
+    params.push(`%${from}%`, `%${from}%`, `%${from}%`);
   }
 
   if (to) {
-    sql += ` AND f.Arrival_Airport_Code = ?`;
-    params.push(to);
+    sql += ` AND (arr.Airport_Code LIKE ? OR arr.City LIKE ? OR arr.Airport_name LIKE ?)`;
+    params.push(`%${to}%`, `%${to}%`, `%${to}%`);
   }
 
   if (min_price) {
@@ -142,8 +151,14 @@ const searchFlights = (req, res) => {
   }
 
   if (airline) {
-    sql += ` AND al.Airline_name = ?`;
-    params.push(airline);
+    sql += ` AND al.Airline_name LIKE ?`;
+    params.push(`%${airline}%`);
+  }
+
+  //filter by status (show all flights, not just 'On Time' like before)
+  if (status) {
+    sql += ` AND f.Status = ?`;
+    params.push(status);
   }
 
   //sorting by
@@ -153,6 +168,8 @@ const searchFlights = (req, res) => {
     sql += ` ORDER BY f.Duration ASC`;
   } else if (sort_by === 'departure_time') {
     sql += ` ORDER BY f.Departure_time ASC`;
+  } else {
+    sql += ` ORDER BY f.Flight_ID ASC`;
   }
 
   //limit how many flights generated from this filtering

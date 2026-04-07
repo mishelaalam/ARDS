@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAllFlights, getAllBookings, addFlight, updateFlight, deleteFlight } from '../api/admin';
+import { searchFlights } from '../api/flights'; //basic search feature is used for admin to search for a flight to manage
 
 const AdminDashboard = () => {
     const { user, setUser, logout } = useAuth();
@@ -20,6 +21,11 @@ const AdminDashboard = () => {
     //set a loading time when waiting for user response
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" }); //to display messages for updates
+
+    //search state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchBy, setSearchBy] = useState('flight_number'); //flight_number, airline, from, to
+    const [isSearching, setIsSearching] = useState(false);
 
     //handle logout const for nav bar
     const handleLogout = () => {
@@ -57,6 +63,74 @@ const AdminDashboard = () => {
         setLoading(false);
     };
 
+    //========= admin search functions =================
+    //handle searching from admin, we allow the admin to be able to search for specific flights they want to manage
+    //and update instead of having ti manually scroll through all flights displayed to find the
+    //right one
+    const handleSearch = async (e) => {
+        e.preventDefault(); //prevent default again
+        if(!searchTerm.trim()) {
+            //if search is empty, reload all flights
+            await loadFlights();
+            setIsSearching(false);
+            return;
+        }
+
+        //set loading and isSearching to true when handling search --> search is not empty
+        setLoading(true);
+        setIsSearching(true);
+        
+        //the search parameters --> this contains the resulting flights
+        let searchParams = {};
+        
+        //build search parameters based on what admin wants to search by
+        //allow admin to search by flight number, airline, from, and to
+        switch(searchBy) {
+            case 'flight_number':
+                searchParams = { flight_number: searchTerm };
+                break;
+            case 'airline':
+                searchParams = { airline: searchTerm };
+                break;
+            case 'from':
+                searchParams = { from: searchTerm };
+                break;
+            case 'to':
+                searchParams = { to: searchTerm };
+                break;
+            default:
+                searchParams = { flight_number: searchTerm };
+        }
+        
+        //add limit to get more results
+        searchParams.limit = 100;
+        
+        //wait for response
+        const response = await searchFlights(searchParams);
+        
+        if (response.success) { //if response is successful, set displaying flights to the flight results
+            setFlights(response.flights); //set flights to normalized flights
+            if (response.count === 0) { //if the response gives no flights
+                setMessage({ type: "error", text: "No flights found matching your search" });
+                setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+            }
+        //if response is unsuccessful, handle error
+        } else {
+            setMessage({ type: "error", text: "Search failed" });
+            setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+        }
+        
+        setLoading(false); //set loading back to false
+    };
+
+    //clear search function to clear the search params for next search
+    const clearSearch = async () => {
+        setSearchTerm("");
+        setIsSearching(false);
+        await loadFlights();
+    };
+
+    //========= manage flight functions ====================
     //handle an input change
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -93,7 +167,7 @@ const AdminDashboard = () => {
             departure_time: flight.Departure_time || "",
             arrival_time: flight.Arrival_time || "",
             duration: flight.Duration || "",
-            base_price: flight.Base_price || "",
+            base_price: flight.Base_price || flight.price || "",
             status: flight.Status || "On Time",
             aircraft_type: flight.Aircraft_type || "",
             available_seats: flight.Available_seats || "",
@@ -172,6 +246,53 @@ const AdminDashboard = () => {
                 </button>
             </div>
 
+            {/* Search Bar */}
+            <div className="mb-6 bg-white rounded-lg shadow p-4">
+                <form onSubmit={handleSearch} className="flex gap-3 items-end">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Search By</label>
+                        <select 
+                            value={searchBy} 
+                            onChange={(e) => setSearchBy(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="flight_number">Flight Number</option>
+                            <option value="airline">Airline Name</option>
+                            <option value="from">Departure Airport/City</option>
+                            <option value="to">Arrival Airport/City</option>
+                        </select>
+                    </div>
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Search Term</label>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={`Search by ${searchBy.replace('_', ' ')}...`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"/>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            Search
+                        </button>
+                        {isSearching && (
+                            <button
+                                type="button"
+                                onClick={clearSearch}
+                                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </form>
+                {isSearching && (
+                    <div className="mt-2 text-sm text-gray-600">
+                        Showing search results • {flights.length} flight(s) found
+                    </div>
+                )}
+            </div>
+
             {/* Message Display */}
             {message.text && (
                 <div className={`mb-6 p-4 rounded-md ${
@@ -193,6 +314,7 @@ const AdminDashboard = () => {
                             <tr>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Flight #</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Airline ID</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Airline</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departure</th>
@@ -204,29 +326,38 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {flights.map((flight) => (
-                                <tr key={flight.Flight_ID}>
-                                    <td className="px-4 py-4 text-sm font-medium text-gray-900">{flight.Flight_number}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.airline_id || flight.Airline_ID}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.origin_code || flight.Departure_Airport_Code}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.destination_code || flight.Arrival_Airport_Code}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Departure_time?.substring(0, 5)}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Arrival_time?.substring(0, 5)}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-900">${flight.Base_price}</td>
-                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Available_seats}</td>
-                                    <td className="px-4 py-4 text-sm">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${
-                                            flight.Status === 'On Time' ? 'bg-green-100 text-green-800' : 
-                                            flight.Status === 'Delayed' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                            {flight.Status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm space-x-2">
-                                        <button onClick={() => openEditModal(flight)} className="text-blue-600 hover:text-blue-800">Edit</button>
-                                        <button onClick={() => handleDelete(flight.Flight_ID)} className="text-red-600 hover:text-red-800">Delete</button>
-                                    </td>
+                            {flights.length === 0 ? (
+                                <tr>
+                                   <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
+                                        No flights found
+                                    </td> 
                                 </tr>
-                            ))}
+                            ) : (
+                                flights.map((flight) => (
+                                    <tr key={flight.Flight_ID}>
+                                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{flight.Flight_number}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.airline_id || flight.Airline_ID || "N/A"}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.airline || flight.airline_name || "N/A"}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.origin_code || flight.Departure_Airport_Code}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.destination_code || flight.Arrival_Airport_Code}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.Departure_time?.substring(0, 5)}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.Arrival_time?.substring(0, 5)}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-900">${flight.Base_price || flight.base_price || flight.price || "0"}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.Available_seats}</td>
+                                        <td className="px-4 py-4 text-sm">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                flight.Status === 'On Time' ? 'bg-green-100 text-green-800' : 
+                                                flight.Status === 'Delayed' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                                {flight.Status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm space-x-2">
+                                            <button onClick={() => openEditModal(flight)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                                            <button onClick={() => handleDelete(flight.Flight_ID)} className="text-red-600 hover:text-red-800">Delete</button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 )}
