@@ -183,7 +183,124 @@ const AdminDashboard = () => {
                 </div>
             )}
 
+            {/* Flights Table */}
+            <div className="bg-white rounded-lg shadow overflow-x-auto">
+                {loading ? (
+                    <div className="text-center py-8">Loading flights...</div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Flight #</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Airline ID</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departure</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arrival</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seats</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {flights.map((flight) => (
+                                <tr key={flight.Flight_ID}>
+                                    <td className="px-4 py-4 text-sm font-medium text-gray-900">{flight.Flight_number}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.airline_id || flight.Airline_ID}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.origin_code || flight.Departure_Airport_Code}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.destination_code || flight.Arrival_Airport_Code}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Departure_time?.substring(0, 5)}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Arrival_time?.substring(0, 5)}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-900">${flight.Base_price}</td>
+                                    <td className="px-4 py-4 text-sm text-gray-500">{flight.Available_seats}</td>
+                                    <td className="px-4 py-4 text-sm">
+                                        <span className={`px-2 py-1 text-xs rounded-full ${
+                                            flight.Status === 'On Time' ? 'bg-green-100 text-green-800' : 
+                                            flight.Status === 'Delayed' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                            {flight.Status}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-4 text-sm space-x-2">
+                                        <button onClick={() => openEditModal(flight)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                                        <button onClick={() => handleDelete(flight.Flight_ID)} className="text-red-600 hover:text-red-800">Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
         </div>
+
+        {/* Add/Edit Flight Modal */}
+        {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="p-6">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                            {editingFlight ? 'Edit Flight' : 'Add New Flight'}
+                        </h3>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Airline ID</label>
+                                    <input type="number" name="airline_id" value={flightForm.airline_id} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Flight Number</label>
+                                    <input type="text" name="flight_number" value={flightForm.flight_number} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Departure Time</label>
+                                    <input type="time" name="departure_time" value={flightForm.departure_time} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Arrival Time</label>
+                                    <input type="time" name="arrival_time" value={flightForm.arrival_time} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration (HH:MM:SS)</label>
+                                    <input type="text" name="duration" value={flightForm.duration} onChange={handleInputChange} placeholder="02:30:00" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Base Price</label>
+                                    <input type="number" name="base_price" value={flightForm.base_price} onChange={handleInputChange} required step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <select name="status" value={flightForm.status} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                        <option value="On Time">On Time</option>
+                                        <option value="Delayed">Delayed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Aircraft Type</label>
+                                    <input type="text" name="aircraft_type" value={flightForm.aircraft_type} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Available Seats</label>
+                                    <input type="number" name="available_seats" value={flightForm.available_seats} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Departure Airport Code</label>
+                                    <input type="text" name="departure_airport_code" value={flightForm.departure_airport_code} onChange={handleInputChange} required maxLength="3" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Arrival Airport Code</label>
+                                    <input type="text" name="arrival_airport_code" value={flightForm.arrival_airport_code} onChange={handleInputChange} required maxLength="3" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+                                <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{loading ? 'Saving...' : (editingFlight ? 'Update' : 'Add')}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>);
 };
 

@@ -172,6 +172,7 @@ const getAllBookings = (req, res) => {
 const getAllFlights = (req, res) => {
     const sql = `SELECT 
                     f.Flight_ID,
+                    f.Airline_ID,
                     f.Flight_number,
                     f.Departure_time,
                     f.Arrival_time,
