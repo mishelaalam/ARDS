@@ -98,6 +98,7 @@ const getUserBookings = (req, res) => {
                     f.Flight_number,
                     f.Departure_time,
                     f.Arrival_time,
+                    f.Departure_date,
                     al.Airline_name as airline,
                     dep.Airport_Code as origin_code,
                     dep.City as origin_city,

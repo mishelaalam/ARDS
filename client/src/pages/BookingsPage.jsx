@@ -12,6 +12,13 @@ const BookingDetailsModal = ({ booking, onClose, onCancel, cancelling }) => {
     return 'bg-gray-100 text-gray-700';
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
@@ -44,11 +51,19 @@ const BookingDetailsModal = ({ booking, onClose, onCancel, cancelling }) => {
               <p className="font-medium text-gray-800">{booking.Flight_number}</p>
             </div>
             <div>
-              <p className="text-gray-400">Departure</p>
+              <p className="text-gray-400">Departure Date</p>
+              <p className="font-medium text-gray-800">{formatDate(booking.Departure_date)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400">Arrival Date</p>
+              <p className="font-medium text-gray-800">{formatDate(booking.Departure_date)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400">Departure Time</p>
               <p className="font-medium text-gray-800">{booking.Departure_time}</p>
             </div>
             <div>
-              <p className="text-gray-400">Arrival</p>
+              <p className="text-gray-400">Arrival Time</p>
               <p className="font-medium text-gray-800">{booking.Arrival_time}</p>
             </div>
             <div>
@@ -110,6 +125,11 @@ const BookingCard = ({ booking, onClick, getStatusColor }) => (
         </div>
         <p className="text-gray-500 text-sm">{booking.airline} · {booking.Flight_number}</p>
         <p className="text-gray-500 text-sm">{booking.origin_city} → {booking.destination_city}</p>
+        {booking.Departure_date && (
+          <p className="text-gray-400 text-xs mt-1">
+            📅 {new Date(booking.Departure_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+          </p>
+        )}
         <p className="text-gray-400 text-xs mt-1">Click to view details</p>
       </div>
       <div className="text-right">
@@ -180,7 +200,6 @@ const BookingsPage = () => {
     return 'bg-gray-100 text-gray-700';
   };
 
-  // split bookings into upcoming and past
   const upcomingBookings = bookings.filter(b => b.Status === 'Confirmed');
   const pastBookings = bookings.filter(b => b.Status === 'Cancelled');
 
@@ -198,8 +217,6 @@ const BookingsPage = () => {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-10">
-
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">My Bookings</h2>
           <button
@@ -276,6 +293,11 @@ const BookingsPage = () => {
                       </div>
                       <p className="text-gray-400 text-sm">{booking.airline} · {booking.Flight_number}</p>
                       <p className="text-gray-400 text-sm">{booking.origin_city} → {booking.destination_city}</p>
+                      {booking.Departure_date && (
+                        <p className="text-gray-300 text-xs mt-1">
+                          📅 {new Date(booking.Departure_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                      )}
                       <p className="text-gray-300 text-xs mt-1">Click to view details</p>
                     </div>
                     <div className="text-right">
@@ -291,7 +313,6 @@ const BookingsPage = () => {
           </div>
         )}
 
-        {/* No past bookings message */}
         {!loading && pastBookings.length === 0 && upcomingBookings.length > 0 && (
           <div className="mt-8 text-center text-gray-400 text-sm">
             No past bookings
@@ -299,7 +320,6 @@ const BookingsPage = () => {
         )}
       </div>
 
-      {/* Booking Details Modal */}
       <BookingDetailsModal
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}

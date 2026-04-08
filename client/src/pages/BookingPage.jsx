@@ -58,6 +58,13 @@ const BookingPage = () => {
     );
   }
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+  };
+
   const totalCost = (flight.price * numPassengers).toFixed(2);
   const taxes = (totalCost * 0.12).toFixed(2);
   const grandTotal = (parseFloat(totalCost) + parseFloat(taxes)).toFixed(2);
@@ -116,11 +123,19 @@ const BookingPage = () => {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 border-t pt-4">
             <div>
-              <p className="font-medium text-gray-700">Departure</p>
+              <p className="font-medium text-gray-700">Departure Date</p>
+              <p>{formatDate(flight.Departure_date)}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Arrival Date</p>
+              <p>{formatDate(flight.Departure_date)}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Departure Time</p>
               <p>{flight.Departure_time}</p>
             </div>
             <div>
-              <p className="font-medium text-gray-700">Arrival</p>
+              <p className="font-medium text-gray-700">Arrival Time</p>
               <p>{flight.Arrival_time}</p>
             </div>
             <div>
@@ -201,7 +216,6 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
       {confirmedRef && (
         <ConfirmationModal
           bookingRef={confirmedRef}

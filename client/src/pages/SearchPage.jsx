@@ -116,6 +116,11 @@ const FlightCard = ({ flight, onBook, onDetails, onCompare, compareSelected }) =
           </span>
         </div>
         <p className="text-gray-500 text-sm">{flight.airline} · {flight.Flight_number}</p>
+        {flight.Departure_date && (
+          <p className="text-gray-400 text-xs mt-0.5">
+            📅 {new Date(flight.Departure_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+          </p>
+        )}
         <div className="flex gap-4 mt-3 text-sm text-gray-600">
           <div>
             <p className="text-gray-400 text-xs">Departure</p>
@@ -264,7 +269,6 @@ const CompareModal = ({ data, onClose, onBook }) => {
         </div>
 
         <div className="p-6">
-          {/* Flight Headers */}
           <div className="grid grid-cols-3 gap-4 mb-6 items-center">
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Category</p>
@@ -281,7 +285,6 @@ const CompareModal = ({ data, onClose, onBook }) => {
             </div>
           </div>
 
-          {/* Comparison Table */}
           <div className="space-y-2">
             {[
               { label: 'Price', a: table.price.flight_a, b: table.price.flight_b, winner: table.price.winner },
@@ -310,14 +313,12 @@ const CompareModal = ({ data, onClose, onBook }) => {
             ))}
           </div>
 
-          {/* Summary */}
           {comparison.recommendation && (
             <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
               <p className="text-green-700 font-medium">💡 {comparison.recommendation}</p>
             </div>
           )}
 
-          {/* Price and time difference */}
           <div className="mt-4 grid grid-cols-2 gap-4 text-center text-sm text-gray-500">
             <div className="bg-gray-50 rounded-lg p-3">
               <p>Price Difference</p>
@@ -330,7 +331,6 @@ const CompareModal = ({ data, onClose, onBook }) => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 p-6 border-t">
           <button onClick={onClose} className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg hover:bg-gray-50 font-medium">Close</button>
           <button
@@ -388,7 +388,7 @@ const SearchPage = () => {
   const navigate = useNavigate();
 
   const [airports, setAirports] = useState([]);
-  const [form, setForm] = useState({ from: '', to: '', passengers: 1 });
+  const [form, setForm] = useState({ from: '', to: '', passengers: 1, departure_date: '' });
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -430,7 +430,8 @@ const SearchPage = () => {
         from: form.from,
         to: form.to,
         passengers: form.passengers,
-        user_id: user.user_id
+        user_id: user.user_id,
+        ...(form.departure_date && { departure_date: form.departure_date })
       });
 
       if (res.success) {
@@ -501,7 +502,8 @@ const SearchPage = () => {
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Search Flights</h2>
           <form onSubmit={handleSearch}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Row 1: From and To */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <AirportInput
                 label="From"
                 airports={airports}
@@ -517,10 +519,27 @@ const SearchPage = () => {
                 disabled={!form.from}
                 placeholder="Type a city or airport..."
               />
+            </div>
+
+            {/* Row 2: Date and Passengers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Departure Date <span className="text-gray-400 text-xs">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={form.departure_date}
+                  onChange={(e) => setForm({ ...form, departure_date: e.target.value })}
+                  min="2026-05-01"
+                  max="2026-05-05"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-gray-400 text-xs mt-1">Available: May 1–5, 2026 · Leave empty to see all flights</p>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
                 <select
-                  name="passengers"
                   value={form.passengers}
                   onChange={(e) => setForm({ ...form, passengers: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -583,7 +602,7 @@ const SearchPage = () => {
               <div className="text-center py-12">
                 <p className="text-4xl mb-4">✈️</p>
                 <p className="text-gray-500">No flights found for this route.</p>
-                <p className="text-gray-400 text-sm mt-1">Try a different route</p>
+                <p className="text-gray-400 text-sm mt-1">Try a different route or date</p>
               </div>
             )}
           </div>

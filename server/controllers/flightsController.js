@@ -91,8 +91,7 @@ const calculateFlightScore = (flight, userPreferences, bookingHistory) => {
 
 //1. SEARCH --> basic search with filters, for users who want to see all flights like admin for instance
 const searchFlights = (req, res) => {
-  //filtering categories
-  const { from, to, flight_number, departure_date, min_price, max_price, airline, status, sort_by = 'flight_id', limit = 50 } = req.query;
+  const { from, to, departure_date, passengers = 1, min_price, max_price, airline, sort_by = 'price', limit = 10 } = req.query;
   
   //sql query based on the above category
   let sql = `SELECT 
@@ -199,7 +198,7 @@ const searchFlights = (req, res) => {
 
 //2. RECOMMENDATIONS - Returns top 3-5 flights with labels
 const getRecommendations = (req, res) => {
-  const { from, to, passengers = 1, user_id = null, limit = 5 } = req.query;
+  const { from, to, passengers = 1, user_id = null, limit = 5, departure_date = null } = req.query;
 
   //validate fields --> make sure that the user provides where they are going to and from where
   if (!from || !to) {
@@ -210,12 +209,13 @@ const getRecommendations = (req, res) => {
   }
 
   //1. get all available flights for that route
-  const flightsSql = `SELECT 
+const flightsSql = `SELECT 
                 f.Flight_ID,
                 f.Flight_number,
                 f.Departure_time,
                 f.Arrival_time,
                 f.Duration,
+                f.Departure_date,
                 f.Base_price as price,
                 f.Available_seats,
                 al.Airline_name as airline,
@@ -230,11 +230,15 @@ const getRecommendations = (req, res) => {
             AND f.Arrival_Airport_Code = ?
             AND f.Available_seats >= ?
             AND f.Status = 'On Time'
+            ${departure_date ? 'AND f.Departure_date = ?' : ''}
             ORDER BY f.Base_price ASC
             LIMIT 20`;
 
-  //query
-  db.query(flightsSql, [from, to, passengers], (err, flights) => {
+  const flightParams = departure_date 
+    ? [from, to, passengers, departure_date] 
+    : [from, to, passengers];
+
+  db.query(flightsSql, flightParams, (err, flights) => {
     //if there is an error, return json error
     if(err) {
       console.error("Error getting flights:", err);

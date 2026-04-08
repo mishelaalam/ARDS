@@ -88,6 +88,7 @@ CREATE TABLE AIRPORT (
 CREATE TABLE FLIGHT (
     Flight_ID int NOT NULL AUTO_INCREMENT,
     Airline_ID int NOT NULL,
+    Departure_date DATE NOT NULL,
     Departure_time time NOT NULL,
     Flight_number varchar(5) NOT NULL,
     Arrival_time time,
