@@ -91,13 +91,14 @@ const calculateFlightScore = (flight, userPreferences, bookingHistory) => {
 
 //1. SEARCH --> basic search with filters, for users who want to see all flights like admin for instance
 const searchFlights = (req, res) => {
-  const { from, to, departure_date, passengers = 1, min_price, max_price, airline, sort_by = 'price', limit = 10 } = req.query;
+  const { from, to, departure_date, flight_number, passengers = 1, min_price, max_price, airline, status, sort_by = 'flight_id', limit = 50 } = req.query;
   
   //sql query based on the above category
   let sql = `SELECT 
               f.Flight_ID,
               f.Airline_ID,
               f.Flight_number,
+              f.Departure_date,
               f.Departure_time,
               f.Arrival_time,
               f.Duration,

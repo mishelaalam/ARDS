@@ -11,21 +11,21 @@ const db = require('../db');
 
 // 1. ADD A NEW FLIGHT
 const addFlight = (req, res) => {
-    const { airline_id, flight_number, departure_time, arrival_time, duration, base_price, status, aircraft_type, available_seats, departure_airport_code, arrival_airport_code } = req.body;
+    const { airline_id, flight_number, departure_date, departure_time, arrival_time, duration, base_price, status, aircraft_type, available_seats, departure_airport_code, arrival_airport_code } = req.body;
 
-    if (!airline_id || !flight_number || !departure_time || !base_price || !status || !departure_airport_code || !arrival_airport_code) {
+    if (!airline_id || !flight_number || !departure_date || !departure_time || !base_price || !status || !departure_airport_code || !arrival_airport_code) {
         return res.status(400).json({
             success: false,
-            error: "Airline ID, flight number, departure time, base price, status, departure and arrival airport codes are required"
+            error: "Airline ID, flight number, departure date, departure time, base price, status, departure and arrival airport codes are required"
         });
     }
 
     const sql = `INSERT INTO FLIGHT 
-                (Airline_ID, Flight_number, Departure_time, Arrival_time, Duration, Base_price, Status, Aircraft_type, Available_seats, Departure_Airport_Code, Arrival_Airport_Code) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                (Airline_ID, Flight_number, Departure_date, Departure_time, Arrival_time, Duration, Base_price, Status, Aircraft_type, Available_seats, Departure_Airport_Code, Arrival_Airport_Code) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
-        airline_id, flight_number, departure_time,
+        airline_id, flight_number, departure_date, departure_time,
         arrival_time || null, duration || null, base_price,
         status, aircraft_type || null, available_seats || 0,
         departure_airport_code, arrival_airport_code
@@ -48,7 +48,7 @@ const addFlight = (req, res) => {
 // 2. UPDATE A FLIGHT
 const updateFlight = (req, res) => {
     const { flight_id } = req.params;
-    const { flight_number, departure_time, arrival_time, duration, base_price, status, aircraft_type, available_seats } = req.body;
+    const { flight_number, departure_date, departure_time, arrival_time, duration, base_price, status, aircraft_type, available_seats } = req.body;
 
     if (!flight_id) {
         return res.status(400).json({ success: false, error: "Flight ID is required" });
@@ -70,6 +70,7 @@ const updateFlight = (req, res) => {
         let updateValues = [];
 
         if (flight_number !== undefined) { updateFields.push("Flight_number = ?"); updateValues.push(flight_number); }
+        if (departure_date !== undefined) { updateFields.push("Departure_date = ?"); updateValues.push(departure_date); }
         if (departure_time !== undefined) { updateFields.push("Departure_time = ?"); updateValues.push(departure_time); }
         if (arrival_time !== undefined) { updateFields.push("Arrival_time = ?"); updateValues.push(arrival_time); }
         if (duration !== undefined) { updateFields.push("Duration = ?"); updateValues.push(duration); }
@@ -174,6 +175,7 @@ const getAllFlights = (req, res) => {
                     f.Flight_ID,
                     f.Airline_ID,
                     f.Flight_number,
+                    f.Departure_date,
                     f.Departure_time,
                     f.Arrival_time,
                     f.Duration,

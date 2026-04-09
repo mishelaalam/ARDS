@@ -37,6 +37,7 @@ const AdminDashboard = () => {
     const [flightForm, setFlightForm] = useState({ 
         airline_id: "",
         flight_number: "",
+        departure_date: "",
         departure_time: "",
         arrival_time: "",
         duration: "",
@@ -140,10 +141,14 @@ const AdminDashboard = () => {
     //open a modal for adding a flight
     const openAddModal = () => {
         setEditingFlight(null);
+        //get today's date in YYYY-MM-DD format for default
+        const today = new Date().toISOString().split('T')[0];
+
         //set the flight form based on input from adding
         setFlightForm({
             airline_id: "",
             flight_number: "",
+            departure_date: today,
             departure_time: "",
             arrival_time: "",
             duration: "",
@@ -161,9 +166,31 @@ const AdminDashboard = () => {
     //same concept as adding
     const openEditModal = (flight) => {
         setEditingFlight(flight);
+
+        // Helper function to format date properly for input[type="date"]
+        const formatDateForInput = (dateValue) => {
+            if (!dateValue) return "";
+            
+            // If it's already a string in YYYY-MM-DD format
+            if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}/) && !dateValue.includes('T')) {
+                return dateValue;
+            }
+            
+            // Convert to Date object and extract YYYY-MM-DD
+            const date = new Date(dateValue);
+            if (isNaN(date.getTime())) return "";
+            
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        };
+
         setFlightForm({
             airline_id: flight.airline_id || flight.Airline_ID || "",
             flight_number: flight.Flight_number || "",
+            departure_date: formatDateForInput(flight.Departure_date),  //format the date properly
             departure_time: flight.Departure_time || "",
             arrival_time: flight.Arrival_time || "",
             duration: flight.Duration || "",
@@ -317,8 +344,9 @@ const AdminDashboard = () => {
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Airline</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departure</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arrival</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departure Date</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departure_Time</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arrival_Time</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seats</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -340,6 +368,7 @@ const AdminDashboard = () => {
                                         <td className="px-4 py-4 text-sm text-gray-500">{flight.airline || flight.airline_name || "N/A"}</td>
                                         <td className="px-4 py-4 text-sm text-gray-500">{flight.origin_code || flight.Departure_Airport_Code}</td>
                                         <td className="px-4 py-4 text-sm text-gray-500">{flight.destination_code || flight.Arrival_Airport_Code}</td>
+                                        <td className="px-4 py-4 text-sm text-gray-500">{flight.Departure_date ? flight.Departure_date.split('T')[0] : "N/A"}</td>
                                         <td className="px-4 py-4 text-sm text-gray-500">{flight.Departure_time?.substring(0, 5)}</td>
                                         <td className="px-4 py-4 text-sm text-gray-500">{flight.Arrival_time?.substring(0, 5)}</td>
                                         <td className="px-4 py-4 text-sm text-gray-900">${flight.Base_price || flight.base_price || flight.price || "0"}</td>
@@ -381,6 +410,10 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Flight Number</label>
                                     <input type="text" name="flight_number" value={flightForm.flight_number} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
+                                    <input type="date" name="departure_date" value={flightForm.departure_date} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Departure Time</label>
