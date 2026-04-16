@@ -70,59 +70,62 @@ The app will be running at `http://localhost:5173`
 ## Project Structure
 ```
 ARDS/
-├── client/                     # React + Tailwind frontend
+├── client/                         # React + Tailwind frontend
 |   ├── src/
-|   │   ├── pages/              # Full pages (routes)
+|   │   ├── pages/                  # Full pages (routes)
 |   │   │   ├── LoginPage.jsx          	
 |   │   │   ├── Dashboard.jsx          	
 |   │   │   ├── AdminDashboard.jsx  
 |   │   │   ├── SearchPage.jsx 	
-|   │   │   ├── BookingPage.jsx        	
-|   │   │   ├── BookingsPage.jsx       	
+|   │   │   ├── BookingPage.jsx     # Confirm a booking   	
+|   │   │   ├── BookingsPage.jsx    # View user's bookings      	
 |   │   │   └── ProfilePage.jsx        	
-|   │   ├── components/ 		# Reusable UI (discarded most, uneeded)
-│   │   |   └── AdminRoute.jsx  # route definition for admin (seperate for organization)   
-|   │   ├── api/                # API calls (mirrors backend routes)
+|   │   ├── components/ 		    # Reusable UI (discarded most, uneeded)
+│   │   |   └── AdminRoute.jsx      # route definition for admin (seperate for organization)   
+|   │   ├── api/                    # API calls (mirrors backend routes)
 |   │   │   ├── auth.js                	
 |   │   │   ├── users.js               	
 |   │   │   ├── admin.js               	
 |   │   │   ├── flights.js             	
 |   │   │   ├── searches.js                   
 |   │   │   └── bookings.js            	
-|   │   ├── context/ 		    # all pages can access it without passing it around everywhere
-|   │   │   └── AuthContext.jsx # store the logged in user's info
-|   │   ├── App.jsx             # Route definitions (React Router)
-|   │   ├── main.jsx            # Entry point (leave mostly unchanged)
-|   │   └── index.css           # Tailwind / global styles
+|   │   ├── context/ 		        # all pages can access it without passing it around everywhere
+|   │   │   └── AuthContext.jsx     # store the logged in user's info
+|   │   ├── App.jsx                 # Route definitions (React Router)
+|   │   ├── main.jsx                # Entry point (leave mostly unchanged)
+|   │   └── index.css               # Tailwind / global styles
 |   ├── public/
 |   │   └── favicon.ico
 |   ├── index.html
 |   ├── package.json
 |   ├── tailwind.config.js
 |   └── vite.config.js
-├── server/                     # Node.js + Express backend
-|   ├── index.js                # Entry point (starts server, connects routes)
-|   ├── db.js                   # Database connection
-|   ├── routes/                 # Handles URLs
+├── server/                         # Node.js + Express backend
+|   ├── index.js                    # Entry point (starts server, connects routes)
+|   ├── db.js                       # Database connection
+|   ├── routes/                     # Handles URLs
 |   │   ├── auth.js
 |   │   ├── users.js
 |   │   ├── flights.js
 |   │   ├── bookings.js
 |   │   ├── searches.js
 |   │   └── admin.js
-|   ├── controllers/            # Handles logic + SQL
+|   ├── controllers/                # Handles logic + SQL
 |   │   ├── authController.js
 |   │   ├── usersController.js
 |   │   ├── flightsController.js
 |   │   ├── bookingsController.js
 |   │   ├── searchesController.js
 |   │   └── adminController.js
-│   └── .env                    # Never pushed to GitHub - create your own
+│   └── .env                        # Never pushed to GitHub - create your own
 └── database/
-    └── schema.sql              # Run this to create all tables
+    └── schema.sql                  # Run this to create all tables
 ```
 
 ---
 
 ## Team
 Group 5 — CPSC 471 W26
+- Hannah Xia
+- Mishela Alam
+- Adeeba Chowdhury
