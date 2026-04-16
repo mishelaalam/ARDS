@@ -68,12 +68,56 @@ The app will be running at `http://localhost:5173`
 ## Project Structure
 ```
 ARDS/
-├── client/          # React + Tailwind frontend
-├── server/          # Node.js + Express backend
-│   ├── index.js
-│   └── .env         # Never pushed to GitHub - create your own
+├── client/                     # React + Tailwind frontend
+|   ├── src/
+|   │   ├── pages/              # Full pages (routes)
+|   │   │   ├── LoginPage.jsx          	
+|   │   │   ├── Dashboard.jsx          	
+|   │   │   ├── AdminDashboard.jsx  
+|   │   │   ├── SearchPage.jsx 	
+|   │   │   ├── BookingPage.jsx        	
+|   │   │   ├── BookingsPage.jsx       	
+|   │   │   └── ProfilePage.jsx        	
+|   │   ├── components/ 		# Reusable UI (discarded most, uneeded)
+│   │   |   └── AdminRoute.jsx  # route definition for admin (seperate for organization)   
+|   │   ├── api/                # API calls (mirrors backend routes)
+|   │   │   ├── auth.js                	
+|   │   │   ├── users.js               	
+|   │   │   ├── admin.js               	
+|   │   │   ├── flights.js             	
+|   │   │   ├── searches.js                   
+|   │   │   └── bookings.js            	
+|   │   ├── context/ 		    # all pages can access it without passing it around everywhere
+|   │   │   └── AuthContext.jsx # store the logged in user's info
+|   │   ├── App.jsx             # Route definitions (React Router)
+|   │   ├── main.jsx            # Entry point (leave mostly unchanged)
+|   │   └── index.css           # Tailwind / global styles
+|   ├── public/
+|   │   └── favicon.ico
+|   ├── index.html
+|   ├── package.json
+|   ├── tailwind.config.js
+|   └── vite.config.js
+├── server/                     # Node.js + Express backend
+|   ├── index.js                # Entry point (starts server, connects routes)
+|   ├── db.js                   # Database connection
+|   ├── routes/                 # Handles URLs
+|   │   ├── auth.js
+|   │   ├── users.js
+|   │   ├── flights.js
+|   │   ├── bookings.js
+|   │   ├── searches.js
+|   │   └── admin.js
+|   ├── controllers/            # Handles logic + SQL
+|   │   ├── authController.js
+|   │   ├── usersController.js
+|   │   ├── flightsController.js
+|   │   ├── bookingsController.js
+|   │   ├── searchesController.js
+|   │   └── adminController.js
+│   └── .env                    # Never pushed to GitHub - create your own
 └── database/
-    └── schema.sql   # Run this to create all tables
+    └── schema.sql              # Run this to create all tables
 ```
 
 ---
