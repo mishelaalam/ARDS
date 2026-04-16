@@ -34,6 +34,7 @@ cd ARDS
 - All tables will be created automatically
 
 ### 3. Set Up the Backend in VS Code
+Open a terminal and do these commands:
 ```bash
 cd server
 npm install
@@ -56,6 +57,7 @@ Connected to MySQL database!
 ```
 
 ### 4. Set Up the Frontend
+Open another terminal and do these commands (you must have two terminals, one for backend and the other for frontend):
 ```bash
 cd ../client
 npm install
