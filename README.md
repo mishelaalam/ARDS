@@ -67,16 +67,40 @@ The app will be running at `http://localhost:5173`
 
 ---
 
+## Test Accounts
+
+You can log in with these sample accounts from the database:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Customer | hannah@gmail.com | hash123 |
+| Customer | alex@gmail.com | hash456 |
+| Admin | admin@yyc.com | hash789 |
+
+---
+
+## Sample Flight Routes
+
+The following routes have multiple flights available for testing recommendations:
+
+| Route | Dates Available |
+|-------|----------------|
+| Calgary (YYC) → Los Angeles (LAX) | May 1, 2026 |
+| Calgary (YYC) → New York (JFK) | May 2, 2026 |
+| Calgary (YYC) → San Francisco (SFO) | May 3, 2026 |
+
+---
+
 ## Project Structure
 ```
 ARDS/
 ├── client/                         # React + Tailwind frontend
 |   ├── src/
 |   │   ├── pages/                  # Full pages (routes)
-|   │   │   ├── LoginPage.jsx          	
-|   │   │   ├── Dashboard.jsx          	
+|   │   │   ├── LoginPage.jsx       # Handles user authentication   	
+|   │   │   ├── Dashboard.jsx       # Shows quick access to all features	
 |   │   │   ├── AdminDashboard.jsx  
-|   │   │   ├── SearchPage.jsx 	
+|   │   │   ├── SearchPage.jsx 	    # Search flights, compare flights, and book
 |   │   │   ├── BookingPage.jsx     # Confirm a booking   	
 |   │   │   ├── BookingsPage.jsx    # View user's bookings      	
 |   │   │   └── ProfilePage.jsx        	
@@ -123,6 +147,14 @@ ARDS/
 ```
 
 ---
+
+## Important Notes
+
+- The `.env` file is **never pushed to GitHub** — each team member creates their own with their local MySQL password
+- Available flight dates in the sample data range from **May 1–5, 2026**
+
+---
+
 
 ## Team
 Group 5 — CPSC 471 W26
